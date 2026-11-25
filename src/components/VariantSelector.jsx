@@ -42,13 +42,13 @@ export function VariantSelector({ variant, onChange, messages = enMessages }) {
     return (
         <fieldset id="variant-group" className="variant-group">
             <legend className="variant-group__legend">{messages.variantLegend}</legend>
-            <div className="variant-options">
+            <div className="variant-options segmented segmented-strong">
                 {variants.map((item) => {
                     const isChecked = variant === item.value;
                     return (
                         <label
                             key={item.value}
-                            className={`variant-label ${isChecked ? 'variant-label--active' : ''}`}
+                            className={`button variant-label ${isChecked ? 'button-active variant-label--active' : ''}`}
                         >
                             <input
                                 type="radio"

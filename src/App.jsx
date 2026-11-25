@@ -1,3 +1,5 @@
+import './f7-init.js';
+import { App as F7App } from 'framework7-react';
 import { useLandscapeLayout } from './hooks/useLandscapeLayout.js';
 import { LandscapeArtwork, NightGhostArtwork } from './components/LandscapeArtwork.jsx';
 import { selectLandscapeArtwork } from './services/landscape-artwork.js';
@@ -43,6 +45,7 @@ import { HelpDialog } from './components/HelpDialog.jsx';
 import { BottomNav } from './components/BottomNav.jsx';
 import { SettingsPanel } from './components/SettingsPanel.jsx';
 import { SpectatorBackButton } from './components/SpectatorBackButton.jsx';
+import { IconArrowLeft } from './components/AppIcons.jsx';
 import { LegalPage } from './components/LegalPage.jsx';
 
 function getRestartState(messages, partnerOnline, rematchRequestedBy, myRole) {
@@ -744,7 +747,7 @@ export function App() {
                 className="game-top-bar__back-btn"
                 onClick={gameViewProps.onBackToSetup}
             >
-                <span aria-hidden="true">←</span>
+                <IconArrowLeft className="back-btn__icon" />
                 <span>{messages.backToSetup}</span>
             </button>
         )
@@ -841,7 +844,7 @@ export function App() {
     const menuLayout = `app-container--with-nav landscape-screen${landscapeLayout ? ' split-panes' : ''}`;
 
     return (
-        <>
+        <F7App name="Sudoku Shift" theme="auto" darkMode={false} className="f7-shell">
             <div
                 id="sudoku-app"
                 className={`app-container ${showBottomNav ? menuLayout : 'app-container--gameplay'}`}
@@ -1035,6 +1038,6 @@ export function App() {
             </div>
 
             {!showBottomNav && landscapeLayout && <NightGhostArtwork nightGhost={nightGhost} />}
-        </>
+        </F7App>
     );
 }

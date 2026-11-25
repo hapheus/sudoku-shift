@@ -5,6 +5,7 @@ import { isValidGameId } from '../services/online-game-client.js';
 import { formatPlayerTag } from '../services/player-name.js';
 import { formatGameDuration } from '../utils/format-duration.js';
 import enMessages from '../locales/en.json';
+import { IconSearch } from './AppIcons.jsx';
 import { PlayerTag } from './PlayerTag.jsx';
 
 function resolveRoomLabels(game, difficultyLabels, pendingJoinGameId, messages) {
@@ -89,7 +90,7 @@ function WatchGameCard({
                 {onJoinGame && (
                     <button
                         type="button"
-                        className="live-game-card__join-btn"
+                        className="button button-small button-fill live-game-card__join-btn"
                         data-join-id={game.game_id}
                         disabled={joinsDisabled || Boolean(game.tic_tac_toe) || Boolean(pendingJoinGameId)}
                         onClick={() => onJoinGame(game.game_id)}
@@ -99,7 +100,7 @@ function WatchGameCard({
                 )}
                 <button
                     type="button"
-                    className="live-game-card__action-btn"
+                    className="button button-small button-fill live-game-card__action-btn"
                     data-watch-id={game.game_id}
                     disabled={updateRequired}
                     onClick={() => onWatchGame(game.game_id)}
@@ -207,23 +208,26 @@ export function WatchDirectory({
 
     return (
         <section id="watch-directory" className="watch-box" aria-label={messages.watchTitle}>
-            <div className="watch-box__header">
-                <h1 className="watch-box__title">{messages.watchTitle}</h1>
-                <div className="watch-box__actions">
-                    <span className={`connection-badge connection-badge--${connectionStatus}`} aria-live="polite">
-                        {connectionLabels[connectionStatus] || connectionStatus}
-                    </span>
-                    {canReconnect && onReconnect && (
-                        <button
-                            type="button"
-                            className="connection-retry-btn"
-                            onClick={onReconnect}
-                        >
-                            {messages.reconnect || 'Reconnect'}
-                        </button>
-                    )}
+            <header className="watch-box__header f7-section-navbar navbar">
+                <div className="navbar-bg" />
+                <div className="navbar-inner watch-box__navbar-inner">
+                    <h1 className="watch-box__title title">{messages.watchTitle}</h1>
+                    <div className="watch-box__actions">
+                        <span className={`badge connection-badge connection-badge--${connectionStatus}`} aria-live="polite">
+                            {connectionLabels[connectionStatus] || connectionStatus}
+                        </span>
+                        {canReconnect && onReconnect && (
+                            <button
+                                type="button"
+                                className="button button-small button-tonal connection-retry-btn"
+                                onClick={onReconnect}
+                            >
+                                {messages.reconnect || 'Reconnect'}
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
+            </header>
             {pendingJoinGameId && (
                 <div className="join-pending-banner" role="status">
                     <span className="join-pending-banner__text">
@@ -240,48 +244,53 @@ export function WatchDirectory({
                     )}
                 </div>
             )}
-            <div className="watch-filters">
-                <label htmlFor="watch-search-input" className="sr-only">
-                    {messages.watchSearchLabel || 'Search live games'}
-                </label>
-                <input
-                    id="watch-search-input"
-                    type="search"
-                    className="watch-filters__search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={messages.watchSearchPlaceholder || 'Search by player, room, or difficulty...'}
-                />
-                <div className="watch-filters__field">
-                    <label htmlFor="watch-joins-filter">{messages.watchFilterJoins || 'Joins'}</label>
-                    <select
-                        id="watch-joins-filter"
-                        className="watch-filters__select"
-                        value={statusFilter}
-                        onChange={(event) => setStatusFilter(event.target.value)}
-                    >
-                        <option value="all">{messages.watchFilterAll || 'All'}</option>
-                        <option value="open">{messages.watchFilterOpen || 'Open'}</option>
-                        <option value="coop">{messages.watchFilterCoop || 'CoOps'}</option>
-                        <option value="closed">{messages.watchFilterClosed || 'Closed'}</option>
-                    </select>
+            <div className="watch-filters f7-inset-list">
+                <div className="f7-inset-list__item watch-search-wrap">
+                    <label htmlFor="watch-search-input" className="sr-only">
+                        {messages.watchSearchLabel || 'Search live games'}
+                    </label>
+                    <IconSearch className="watch-search-wrap__icon" />
+                    <input
+                        id="watch-search-input"
+                        type="search"
+                        className="watch-filters__search"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={messages.watchSearchPlaceholder || 'Search by player, room, or difficulty...'}
+                    />
                 </div>
-                <div className="watch-filters__field">
-                    <label htmlFor="watch-sizes-filter">{messages.watchFilterSizes || 'Sizes'}</label>
-                    <select
-                        id="watch-sizes-filter"
-                        className="watch-filters__select"
-                        value={variantFilter}
-                        onChange={(event) => setVariantFilter(event.target.value)}
-                    >
-                        <option value="all">{messages.watchFilterAll || 'All'}</option>
-                        <option value="3x3">3x3</option>
-                        <option value="2x3">2x3</option>
-                    </select>
+                <div className="f7-inset-list__item watch-filters__row">
+                    <div className="watch-filters__field">
+                        <label htmlFor="watch-joins-filter">{messages.watchFilterJoins || 'Joins'}</label>
+                        <select
+                            id="watch-joins-filter"
+                            className="watch-filters__select"
+                            value={statusFilter}
+                            onChange={(event) => setStatusFilter(event.target.value)}
+                        >
+                            <option value="all">{messages.watchFilterAll || 'All'}</option>
+                            <option value="open">{messages.watchFilterOpen || 'Open'}</option>
+                            <option value="coop">{messages.watchFilterCoop || 'CoOps'}</option>
+                            <option value="closed">{messages.watchFilterClosed || 'Closed'}</option>
+                        </select>
+                    </div>
+                    <div className="watch-filters__field">
+                        <label htmlFor="watch-sizes-filter">{messages.watchFilterSizes || 'Sizes'}</label>
+                        <select
+                            id="watch-sizes-filter"
+                            className="watch-filters__select"
+                            value={variantFilter}
+                            onChange={(event) => setVariantFilter(event.target.value)}
+                        >
+                            <option value="all">{messages.watchFilterAll || 'All'}</option>
+                            <option value="3x3">3x3</option>
+                            <option value="2x3">2x3</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             {filteredGames.length > 0 ? (
-                <ul id="live-games-list" className="live-games-list">
+                <ul id="live-games-list" className="live-games-list f7-inset-list">
                     {filteredGames.map((game) => (
                         <WatchGameCard
                             key={game.game_id}

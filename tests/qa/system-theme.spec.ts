@@ -13,7 +13,7 @@ for (const colorScheme of ['dark', 'light'] as const) {
             const appearance = page.getByRole('combobox', { name: 'Appearance' });
             await expect(appearance).toHaveValue('system');
             await expect(page.locator('html')).toHaveAttribute('data-theme', colorScheme);
-            await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', colorScheme === 'dark' ? '#13161b' : '#f6f2ea');
+            await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', colorScheme === 'dark' ? '#11141a' : '#f7f5f0');
             const box = (await appearance.boundingBox())!;
             expect(box.width).toBeGreaterThanOrEqual(44);
             expect(box.height).toBeGreaterThanOrEqual(44);

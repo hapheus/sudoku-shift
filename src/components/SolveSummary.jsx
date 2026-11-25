@@ -68,7 +68,7 @@ export function SolveSummary({
                 <div className="solve-summary__actions">
                     <button
                         type="button"
-                        className="solve-summary__cta"
+                        className="button button-fill solve-summary__cta"
                         disabled={restartDisabled}
                         onClick={onPlayAgain}
                     >
@@ -78,7 +78,7 @@ export function SolveSummary({
                         <button
                             type="button"
                             id="solve-setup-btn"
-                            className="btn-secondary solve-summary__secondary-btn"
+                            className="button button-outline btn-secondary solve-summary__secondary-btn"
                             onClick={onBackToSetup}
                         >
                             {messages.backToSetup || 'Back'}

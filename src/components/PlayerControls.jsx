@@ -3,6 +3,13 @@ import { KONAMI_BUTTON_LABELS } from '../domain/konami-code.js';
 import { getDigitCounts } from '../domain/sudoku-engine.js';
 import { getVariantSpec, inferVariantFromBoardLength } from '../domain/sudoku-generator.js';
 import enMessages from '../locales/en.json';
+import {
+    IconArrowDown,
+    IconArrowLeft,
+    IconArrowRight,
+    IconArrowUp,
+    IconCheck,
+} from './AppIcons.jsx';
 
 function handleToolbarKeyDown(event) {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -93,7 +100,7 @@ export const PlayerControls = React.memo(function PlayerControls({
                     title={`${messages.shiftRowUp || 'Shift row up'} (Shift + ↑)`}
                     onClick={() => onShiftRow?.(-1)}
                 >
-                    ↑
+                    <IconArrowUp className="shift-btn__icon" />
                 </button>
                 <button
                     type="button"
@@ -104,7 +111,7 @@ export const PlayerControls = React.memo(function PlayerControls({
                     title={`${messages.shiftRowDown || 'Shift row down'} (Shift + ↓)`}
                     onClick={() => onShiftRow?.(1)}
                 >
-                    ↓
+                    <IconArrowDown className="shift-btn__icon" />
                 </button>
                 <button
                     type="button"
@@ -115,7 +122,7 @@ export const PlayerControls = React.memo(function PlayerControls({
                     title={`${messages.shiftColLeft || 'Shift column left'} (Shift + ←)`}
                     onClick={() => onShiftCol?.(-1)}
                 >
-                    ←
+                    <IconArrowLeft className="shift-btn__icon" />
                 </button>
                 <button
                     type="button"
@@ -126,7 +133,7 @@ export const PlayerControls = React.memo(function PlayerControls({
                     title={`${messages.shiftColRight || 'Shift column right'} (Shift + →)`}
                     onClick={() => onShiftCol?.(1)}
                 >
-                    →
+                    <IconArrowRight className="shift-btn__icon" />
                 </button>
             </>
         );
@@ -242,7 +249,7 @@ export const PlayerControls = React.memo(function PlayerControls({
                         >
                             <span className="numpad-btn__digit">{d}</span>{' '}
                             <span className="numpad-btn__count" aria-hidden="true">
-                                {remaining > 0 ? remaining : '✓'}
+                                {remaining > 0 ? remaining : <IconCheck className="numpad-btn__check-icon" />}
                             </span>
                         </button>
                     );

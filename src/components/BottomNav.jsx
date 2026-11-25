@@ -81,8 +81,8 @@ export function BottomNav({
     };
 
     return (
-        <nav className="bottom-nav" aria-label={messages.primaryNavLabel || 'Primary Navigation'}>
-            <div ref={tabList} className={`bottom-nav__list${compact ? ' bottom-nav__list--compact' : ''}`} role="tablist">
+        <nav className="bottom-nav toolbar toolbar-bottom tabbar tabbar-icons" aria-label={messages.primaryNavLabel || 'Primary Navigation'}>
+            <div ref={tabList} className={`toolbar-inner bottom-nav__list${compact ? ' bottom-nav__list--compact' : ''}`} role="tablist">
                 {items.map((item, idx) => {
                     const isActive = activeTab === item.id;
                     return (
@@ -97,7 +97,7 @@ export function BottomNav({
                             aria-label={item.label}
                             aria-selected={isActive}
                             tabIndex={isActive || (activeTab == null && idx === 0) ? 0 : -1}
-                            className={`bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''}`}
+                            className={`tab-link bottom-nav__item ${isActive ? 'tab-link-active bottom-nav__item--active' : ''}`}
                             onClick={() => onSelectTab(item.id)}
                             onKeyDown={(e) => handleKeyDown(e, idx)}
                         >
@@ -105,7 +105,7 @@ export function BottomNav({
                                 {item.icon}
                                 {item.badge && <span className="bottom-nav__dot" aria-hidden="true" />}
                             </span>
-                            <span className="bottom-nav__label" aria-hidden="true">{item.label}</span>
+                            <span className="tabbar-label bottom-nav__label" aria-hidden="true">{item.label}</span>
                         </button>
                     );
                 })}

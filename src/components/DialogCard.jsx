@@ -46,13 +46,13 @@ export function DialogCard({ id, title, closeLabel, onClose, panel = false, retu
             aria-modal={panel ? undefined : true}
             aria-labelledby={titleId}
         >
-            <div className="dialog-card__header">
+            <div className="dialog-card__header f7-dialog-navbar">
                 <h2 id={titleId} className="dialog-card__title">{title}</h2>
-                <button ref={closeBtnRef} type="button" className="dialog-card__close" onClick={onClose}>
+                <button ref={closeBtnRef} type="button" className="button button-small button-tonal dialog-card__close" onClick={onClose}>
                     {closeLabel}
                 </button>
             </div>
-            {children}
+            <div className="dialog-card__body">{children}</div>
         </section>
     );
     if (panel) return content;

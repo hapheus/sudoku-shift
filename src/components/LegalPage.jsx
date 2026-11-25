@@ -1,5 +1,6 @@
 import React from 'react';
 import enMessages from '../locales/en.json';
+import { IconArrowLeft } from './AppIcons.jsx';
 
 function renderLegalContent(isPrivacy, isGerman) {
     if (isPrivacy) return (
@@ -273,7 +274,7 @@ export function LegalPage({
                     className="game-top-bar__back-btn"
                     onClick={onBack}
                 >
-                    <span aria-hidden="true">←</span>
+                    <IconArrowLeft className="back-btn__icon" />
                     <span>{messages.legalBackToApp || 'Back to Sudoku Shift'}</span>
                 </button>
                 <a

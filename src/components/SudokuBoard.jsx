@@ -116,7 +116,7 @@ export const SudokuBoard = React.memo(function SudokuBoard({
                 ))}
             </div>
 
-            <div className="board-frame">
+            <div className="board-frame board-tray">
                 <div className={`board-col-axes ${is6x6 ? 'board-col-axes--6x6' : ''}`} aria-hidden="true">
                     {axisIndices.map((col) => (
                         <span key={col} className="board-axis-label">{getColLabel(col - 1)}</span>

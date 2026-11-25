@@ -1,9 +1,19 @@
 import React from 'react';
+import { Button } from 'framework7-react';
 import { APP_STORE_URL } from '../utils/app-routing.js';
 import { DifficultySelector } from './DifficultySelector.jsx';
 import { VariantSelector } from './VariantSelector.jsx';
 
 const APPLE_LOGO_PATH = 'M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z';
+
+const PREVIEW_CELLS = [
+    { v: '5', tone: 'peer' }, { v: '3', tone: 'sel' }, { v: '4', tone: 'peer user br' },
+    { v: '6', tone: 'peer' }, { v: '1', tone: 'peer partner' }, { v: '2', tone: 'peer' },
+    { v: '6', tone: 'bb' }, { v: '2', tone: 'peer user bb' }, { v: '1', tone: 'br bb' },
+    { v: '4', tone: 'bb' }, { v: '5', tone: 'hint bb' }, { v: '3', tone: 'bb' },
+    { v: '1', tone: '' }, { v: '4', tone: 'peer' }, { v: '2', tone: 'partner br' },
+    { v: '3', tone: '' }, { v: '6', tone: '' }, { v: '5', tone: 'user' },
+];
 
 export function SetupView({
     variant,
@@ -20,12 +30,27 @@ export function SetupView({
     return (
         <section id="play-setup" className="play-setup split-layout" aria-label={messages.setupTitle}>
             <div className="split-region split-region--primary">
-                <header className="play-setup__header">
+                <header className="play-setup__header f7-large-header">
                     <h1 className="play-setup__title">{messages.gameTitle}</h1>
+                    {messages.splashTagline && (
+                        <p className="play-setup__tagline">{messages.splashTagline}</p>
+                    )}
                 </header>
+                <div className="setup-enamel-tray" aria-hidden="true">
+                    <div className={`setup-enamel-preview${variant === '2x3' ? ' setup-enamel-preview--6x6' : ''}`}>
+                        {PREVIEW_CELLS.map((cell, index) => (
+                            <span
+                                key={index}
+                                className={`setup-enamel-preview__cell ${cell.tone}`}
+                            >
+                                {cell.v}
+                            </span>
+                        ))}
+                    </div>
+                </div>
             </div>
             <div className="split-region split-region--secondary">
-                <div className="setup-controls">
+                <div className="setup-controls f7-inset-card">
                     <VariantSelector
                         variant={variant}
                         onChange={onVariantChange}
@@ -39,23 +64,27 @@ export function SetupView({
                 </div>
 
                 <div className="play-setup__actions">
-                    <button
+                    <Button
                         type="button"
                         id="start-game-btn"
+                        fill
+                        large
                         className="btn-primary play-setup__cta"
                         onClick={onPlay}
                     >
                         {messages.startPuzzle}
-                    </button>
+                    </Button>
                     {canResumeGame && (
-                        <button
+                        <Button
                             type="button"
                             id="resume-game-btn"
+                            tonal
+                            large
                             className="btn-secondary play-setup__resume"
                             onClick={onResume}
                         >
                             {messages.resumePuzzle}
-                        </button>
+                        </Button>
                     )}
                 </div>
 
@@ -63,7 +92,7 @@ export function SetupView({
                     <footer id="web-start-footer" className="play-setup__web-footer" aria-label={messages.webFooterLabel}>
                         <a
                             id="app-store-link"
-                            className="app-store-link"
+                            className="app-store-link button button-outline button-round"
                             href={APP_STORE_URL}
                             target="_blank"
                             rel="noopener noreferrer"

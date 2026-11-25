@@ -54,6 +54,7 @@ export default defineConfig(({ mode }) => {
                     codeSplitting: {
                         groups: [
                             { name: 'vendor-react', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+                            { name: 'vendor-framework7', test: /[\\/]node_modules[\\/](framework7|framework7-react|dom7|ssr-window)[\\/]/ },
                             { name: 'vendor-centrifuge', test: /[\\/]node_modules[\\/]centrifuge[\\/]/ },
                             { name: 'board-catalog', test: /board-background-catalog\.json$/ },
                         ],
