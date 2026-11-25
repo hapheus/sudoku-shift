@@ -18,10 +18,12 @@ export function DialogCard({ id, title, closeLabel, onClose, panel = false, retu
             }
             if (panel || event.key !== 'Tab') return;
 
-            const buttons = cardRef.current?.querySelectorAll('button:not(:disabled)');
-            if (!buttons?.length) return;
-            const first = buttons[0];
-            const last = buttons[buttons.length - 1];
+            const focusables = cardRef.current?.querySelectorAll(
+                'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+            );
+            if (!focusables?.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
             const boundary = event.shiftKey ? first : last;
             if (document.activeElement === boundary || !cardRef.current.contains(document.activeElement)) {
                 event.preventDefault();

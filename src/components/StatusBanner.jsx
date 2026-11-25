@@ -14,16 +14,22 @@ function formatPartnerStatusLabel(partnerCount, partnerOnline, partnerMembers, m
     return singlePartnerName ? `${singlePartnerName} (${messages.partnerOnline})` : messages.partnerOnline;
 }
 
-function formatSpectatorOpponentLabel(resolvedMode, hostOnline, guestCount, guestOnline) {
-    const hostState = hostOnline ? 'Online' : 'Offline';
+function formatSpectatorOpponentLabel(resolvedMode, hostOnline, guestCount, guestOnline, messages) {
+    const onlineText = messages.statusOnline || 'Online';
+    const offlineText = messages.statusOffline || 'Offline';
+    const hostState = hostOnline ? onlineText : offlineText;
     if (resolvedMode === 'solo' && !guestOnline) {
-        return `Solo Player: ${hostState}`;
+        return (messages.spectatorSoloStatus || 'Solo Player: {hostState}').replace('{hostState}', hostState);
     }
     if (guestCount > 1) {
-        return `Host: ${hostState} | Partners: ${guestCount} Online`;
+        return (messages.spectatorCoopMultiStatus || 'Host: {hostState} | Partners: {count} Online')
+            .replace('{hostState}', hostState)
+            .replace('{count}', String(guestCount));
     }
-    const guestState = guestOnline ? 'Online' : 'Offline';
-    return `Host: ${hostState} | Partner: ${guestState}`;
+    const guestState = guestOnline ? onlineText : offlineText;
+    return (messages.spectatorCoopSingleStatus || 'Host: {hostState} | Partner: {guestState}')
+        .replace('{hostState}', hostState)
+        .replace('{guestState}', guestState);
 }
 
 function buildPresenceBadges({ isSpectating, isCoopActive, myRole, partnerCount, partnerOnline, partnerMembers, messages, gameState, onContinueSolo, myMember, currentMembers, spectatedGameMode }) {
@@ -42,13 +48,13 @@ function buildPresenceBadges({ isSpectating, isCoopActive, myRole, partnerCount,
 
         opponentBadge = (
             <span id="opponent-status" className="presence-badge" aria-live="polite">
-                {formatSpectatorOpponentLabel(resolvedMode, hostOnline, guestCount, guestOnline)}
+                {formatSpectatorOpponentLabel(resolvedMode, hostOnline, guestCount, guestOnline, messages)}
             </span>
         );
 
         spectatorBadge = (
             <span id="spectator-status" className="presence-badge presence-badge--spectators" aria-live="polite">
-                {`${spectatorCount} Watching`}
+                {(messages.watchingCount || '{count} Watching').replace('{count}', String(spectatorCount))}
             </span>
         );
     return { opponentBadge, continueSoloBtn, spectatorBadge, coopLegend };
@@ -79,7 +85,7 @@ function buildPresenceBadges({ isSpectating, isCoopActive, myRole, partnerCount,
         }
 
         coopLegend = (
-            <span className="coop-legend" aria-label="Cell ownership colors">
+            <span className="coop-legend" aria-label={messages.cellOwnershipColorsLabel || 'Cell ownership colors'}>
                 <span className="coop-legend__item coop-legend__item--self">
                     <span className="coop-legend__swatch" aria-hidden="true" />
                     {myMember?.displayName ? `${messages.youLabel} (${myMember.displayName})` : messages.youLabel}
@@ -93,9 +99,12 @@ function buildPresenceBadges({ isSpectating, isCoopActive, myRole, partnerCount,
     }
 
     if (spectatorCount > 0) {
+        const spectatorTemplate = spectatorCount === 1
+            ? (messages.spectatorSingle || '{count} Spectator')
+            : (messages.spectatorPlural || '{count} Spectators');
         spectatorBadge = (
             <span id="spectator-status" className="presence-badge presence-badge--spectators" aria-live="polite">
-                {`${spectatorCount} Spectator${spectatorCount === 1 ? '' : 's'}`}
+                {spectatorTemplate.replace('{count}', String(spectatorCount))}
             </span>
         );
     }
@@ -111,6 +120,7 @@ export function StatusBanner({
     currentMembers,
     spectatedGameMode,
     gameState,
+    elapsedSeconds = null,
     onReconnect,
     onContinueSolo = null,
     messages = enMessages,
@@ -138,12 +148,16 @@ export function StatusBanner({
     let badgeType = 'active-turn';
 
     if (gameState.status === 'solved') {
-        statusText = isCoopActive || isSpectating
-            ? `Puzzle solved • ${spec.shortLabel} ${diffLabel}`
-            : `Solved • ${spec.shortLabel} ${diffLabel}`;
+        const solvedTemplate = isCoopActive || isSpectating
+            ? (messages.statusSolvedFull || 'Puzzle solved • {variant} {difficulty}')
+            : (messages.statusSolvedShort || 'Solved • {variant} {difficulty}');
+        statusText = solvedTemplate.replace('{variant}', spec.shortLabel).replace('{difficulty}', diffLabel);
         badgeType = 'success';
     } else if (gameState.conflicts && gameState.conflicts.length > 0) {
-        statusText = `${gameState.conflicts.length} conflicting cell${gameState.conflicts.length === 1 ? '' : 's'}`;
+        const conflictTemplate = gameState.conflicts.length === 1
+            ? (messages.statusConflictSingle || '{count} conflicting cell')
+            : (messages.statusConflictPlural || '{count} conflicting cells');
+        statusText = conflictTemplate.replace('{count}', String(gameState.conflicts.length));
         badgeType = 'alert';
     } else if (isSpectating) {
         statusText = `${messages.watchingLabel} • ${spec.shortLabel} ${diffLabel}`;
@@ -160,11 +174,11 @@ export function StatusBanner({
 
     if (isRealtimeMode) {
         const labels = {
-            connected: 'Live',
-            connecting: 'Connecting...',
-            unavailable: 'Offline',
-            failed: 'Connection lost',
-            disconnected: 'Disconnected',
+            connected: messages.connectionLive || 'Live',
+            connecting: messages.connectionConnecting || 'Connecting...',
+            unavailable: messages.connectionUnavailable || 'Offline',
+            failed: messages.connectionFailed || 'Connection lost',
+            disconnected: messages.connectionDisconnected || 'Disconnected',
         };
         connectionBadge = (
             <span
@@ -183,10 +197,11 @@ export function StatusBanner({
 
     const filledCellsLabel = messages.gameInfoFilledCells || 'Filled cells';
     const elapsedTimeLabel = messages.gameInfoElapsedTime || 'Elapsed time';
+    const displayElapsedSeconds = elapsedSeconds ?? gameState.elapsedSeconds ?? 0;
     const hasMetaBadges = Boolean(connectionBadge || canRetryConnection || opponentBadge || continueSoloBtn || spectatorBadge || coopLegend);
 
     return (
-        <section className="status-banner" aria-label="Game Status">
+        <section className="status-banner" aria-label={messages.gameStatusLabel || 'Game Status'}>
             {hasMetaBadges && (
                 <div className="status-meta-row">
                     {connectionBadge}
@@ -197,7 +212,7 @@ export function StatusBanner({
                             className="connection-retry-btn"
                             onClick={onReconnect}
                         >
-                            Reconnect
+                            {messages.reconnect || 'Reconnect'}
                         </button>
                     )}
                     {opponentBadge}
@@ -216,7 +231,7 @@ export function StatusBanner({
                         {`${filledCellsLabel} · ${gameState.filledCount}/${spec.totalCells}`}
                     </span>
                     <span id="sudoku-timer" className="telemetry-pill">
-                        {`${elapsedTimeLabel} · ${formatGameDuration(gameState.elapsedSeconds || 0)}`}
+                        {`${elapsedTimeLabel} · ${formatGameDuration(displayElapsedSeconds)}`}
                     </span>
                 </div>
             </div>

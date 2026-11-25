@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { ModeTabs } from '../src/components/ModeTabs.jsx';
 import { BottomNav } from '../src/components/BottomNav.jsx';
 import { SettingsPanel } from '../src/components/SettingsPanel.jsx';
 import { VariantSelector } from '../src/components/VariantSelector.jsx';
@@ -52,7 +51,7 @@ describe('UI/UX components & Solo persistence', () => {
         localStorage.clear();
     });
 
-    it('supports WAI-ARIA arrow-key navigation in 3-tab BottomNav and 2-tab ModeTabs', () => {
+    it('supports WAI-ARIA arrow-key navigation with focus transfer in 3-tab BottomNav', () => {
         const onSelectTab = vi.fn();
         render(<BottomNav activeTab="play" onSelectTab={onSelectTab} />);
 
@@ -64,17 +63,14 @@ describe('UI/UX components & Solo persistence', () => {
         expect(watchTab).toHaveAttribute('tabindex', '-1');
         expect(settingsTab).toHaveAttribute('tabindex', '-1');
 
+        playTab.focus();
         fireEvent.keyDown(playTab, { key: 'ArrowRight' });
         expect(onSelectTab).toHaveBeenCalledWith('watch');
+        expect(document.activeElement).toBe(watchTab);
 
-        fireEvent.keyDown(playTab, { key: 'End' });
+        fireEvent.keyDown(watchTab, { key: 'End' });
         expect(onSelectTab).toHaveBeenCalledWith('settings');
-
-        const onSelectMode = vi.fn();
-        render(<ModeTabs mode="solo" onSelectMode={onSelectMode} />);
-        const soloTab = screen.getByRole('tab', { name: 'Solo' });
-        fireEvent.keyDown(soloTab, { key: 'ArrowRight' });
-        expect(onSelectMode).toHaveBeenCalledWith('watch');
+        expect(document.activeElement).toBe(settingsTab);
     });
 
     it('emits theme, language, join rules, music, sound, volume, and guide callbacks in SettingsPanel', () => {

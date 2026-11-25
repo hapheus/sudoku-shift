@@ -51,7 +51,7 @@ function ghostGroupAttribute(row, col, groups) {
     return group === from || group === to ? true : undefined;
 }
 
-export function SudokuBoard({
+export const SudokuBoard = React.memo(function SudokuBoard({
     gameState,
     selectedIndex,
     activeDigit = null,
@@ -140,7 +140,7 @@ export function SudokuBoard({
                         ].filter(Boolean).join(' ')}
                         data-night-ghost-phase={nightGhost?.phase}
                         role="grid"
-                        aria-label={`${gridSize} by ${gridSize} Sudoku grid`}
+                        aria-label={(messages?.sudokuGridAria || '{gridSize} by {gridSize} Sudoku grid').replaceAll('{gridSize}', String(gridSize))}
                     >
                         {nightGhost && <NightGhost appearance={nightGhost} spec={spec} />}
                         {hasArtwork && (
@@ -149,6 +149,7 @@ export function SudokuBoard({
                                     src={boardBackground.src}
                                     alt=""
                                     className="sudoku-board__artwork-img"
+                                    decoding="async"
                                     draggable={false}
                                 />
                             </div>
@@ -235,6 +236,7 @@ export function SudokuBoard({
                                                 isPartnerOwned,
                                                 isPartnerFocused,
                                                 isPlayerFocused,
+                                                messages,
                                             })}
                                             onClick={() => onCellSelect(idx)}
                                         >
@@ -312,4 +314,4 @@ export function SudokuBoard({
             </div>
         </div>
     );
-}
+});

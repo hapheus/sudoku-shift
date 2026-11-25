@@ -155,7 +155,7 @@ test('cell tool labels fit individually and retain their accessible names', asyn
     await page.routeWebSocket(/.*/, socket => socket.close());
     await page.goto('/');
     await page.locator('#start-game-btn').click();
-    const toolbar = page.getByRole('toolbar', { name: 'Cell tools' });
+    const toolbar = page.getByRole('toolbar', { name: 'Zellwerkzeuge' });
     const buttons = toolbar.getByRole('button');
     const visibleLabels = () => buttons.evaluateAll(tools => tools.map(tool => {
         const content = tool.querySelector('.tool-btn__content')!;

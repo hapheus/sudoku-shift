@@ -76,7 +76,7 @@ function WatchGameCard({
         messages,
     );
     return (
-        <div className="live-game-card">
+        <li className="live-game-card">
             <div className="live-game-card__info">
                 <span className="live-game-card__title">
                     {hostTag ? <PlayerTag tag={hostTag} /> : `Room #${game.game_id.slice(0, 8)}`}
@@ -107,7 +107,7 @@ function WatchGameCard({
                     {messages.watchLiveBtn}
                 </button>
             </div>
-        </div>
+        </li>
     );
 }
 
@@ -198,17 +198,17 @@ export function WatchDirectory({
 
     const canReconnect = connectionStatus === 'failed' || connectionStatus === 'disconnected' || connectionStatus === 'unavailable';
     const connectionLabels = {
-        connected: 'Live',
-        connecting: 'Connecting...',
-        unavailable: 'Offline',
-        failed: 'Connection lost',
-        disconnected: 'Disconnected',
+        connected: messages.connectionLive || 'Live',
+        connecting: messages.connectionConnecting || 'Connecting...',
+        unavailable: messages.connectionUnavailable || 'Offline',
+        failed: messages.connectionFailed || 'Connection lost',
+        disconnected: messages.connectionDisconnected || 'Disconnected',
     };
 
     return (
         <section id="watch-directory" className="watch-box" aria-label={messages.watchTitle}>
             <div className="watch-box__header">
-                <h2 className="watch-box__title">{messages.watchTitle}</h2>
+                <h1 className="watch-box__title">{messages.watchTitle}</h1>
                 <div className="watch-box__actions">
                     <span className={`connection-badge connection-badge--${connectionStatus}`} aria-live="polite">
                         {connectionLabels[connectionStatus] || connectionStatus}
@@ -219,7 +219,7 @@ export function WatchDirectory({
                             className="connection-retry-btn"
                             onClick={onReconnect}
                         >
-                            Reconnect
+                            {messages.reconnect || 'Reconnect'}
                         </button>
                     )}
                 </div>
@@ -280,47 +280,51 @@ export function WatchDirectory({
                     </select>
                 </div>
             </div>
-            <div id="live-games-list" className="live-games-list" role={filteredGames.length > 0 ? 'feed' : undefined}>
-                {liveGames.length === 0 && (
-                    <div className="watch-empty">
-                        <p className="live-game-card__meta">
-                            {canReconnect
-                                ? 'Not connected to the live server right now.'
-                                : messages.watchEmpty}
-                        </p>
-                        <p className="watch-empty__sub">
-                            {messages.watchEmptySub}
-                        </p>
-                    </div>
-                )}
-                {liveGames.length > 0 && filteredGames.length === 0 && (
-                    <div className="watch-empty">
-                        <p className="live-game-card__meta">
-                            {messages.watchNoMatches || 'No matching live games.'}
-                        </p>
-                        {hasActiveFilters && (
-                            <button
-                                type="button"
-                                className="watch-box__refresh-btn"
-                                onClick={clearFilters}
-                            >
-                                {messages.watchClearFilters || 'Clear filters'}
-                            </button>
-                        )}
-                    </div>
-                )}
-                {filteredGames.map((game) => (
-                    <WatchGameCard
-                        key={game.game_id}
-                        game={game}
-                        difficultyLabels={difficultyLabels}
-                        pendingJoinGameId={pendingJoinGameId}
-                        onJoinGame={onJoinGame}
-                        onWatchGame={onWatchGame}
-                        messages={messages}
-                    />
-                ))}
-            </div>
+            {filteredGames.length > 0 ? (
+                <ul id="live-games-list" className="live-games-list">
+                    {filteredGames.map((game) => (
+                        <WatchGameCard
+                            key={game.game_id}
+                            game={game}
+                            difficultyLabels={difficultyLabels}
+                            pendingJoinGameId={pendingJoinGameId}
+                            onJoinGame={onJoinGame}
+                            onWatchGame={onWatchGame}
+                            messages={messages}
+                        />
+                    ))}
+                </ul>
+            ) : (
+                <div id="live-games-list" className="live-games-list">
+                    {liveGames.length === 0 ? (
+                        <div className="watch-empty">
+                            <p className="live-game-card__meta">
+                                {canReconnect
+                                    ? (messages.watchServerDisconnected || 'Not connected to the live server right now.')
+                                    : messages.watchEmpty}
+                            </p>
+                            <p className="watch-empty__sub">
+                                {messages.watchEmptySub}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="watch-empty">
+                            <p className="live-game-card__meta">
+                                {messages.watchNoMatches || 'No matching live games.'}
+                            </p>
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    className="watch-box__refresh-btn"
+                                    onClick={clearFilters}
+                                >
+                                    {messages.watchClearFilters || 'Clear filters'}
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
         </section>
     );
 }

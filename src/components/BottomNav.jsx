@@ -8,6 +8,7 @@ export function BottomNav({
     messages = enMessages,
 }) {
     const tabList = useRef(null);
+    const tabRefs = useRef([]);
     const [compact, setCompact] = useState(false);
 
     useLayoutEffect(() => {
@@ -62,29 +63,34 @@ export function BottomNav({
     ];
 
     const handleKeyDown = (e, idx) => {
+        let nextIdx = null;
         if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            onSelectTab(items[(idx + 1) % items.length].id);
+            nextIdx = (idx + 1) % items.length;
         } else if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            onSelectTab(items[(idx - 1 + items.length) % items.length].id);
+            nextIdx = (idx - 1 + items.length) % items.length;
         } else if (e.key === 'Home') {
-            e.preventDefault();
-            onSelectTab(items[0].id);
+            nextIdx = 0;
         } else if (e.key === 'End') {
+            nextIdx = items.length - 1;
+        }
+        if (nextIdx !== null) {
             e.preventDefault();
-            onSelectTab(items[items.length - 1].id);
+            onSelectTab(items[nextIdx].id);
+            tabRefs.current[nextIdx]?.focus();
         }
     };
 
     return (
-        <nav className="bottom-nav" aria-label="Primary Navigation">
+        <nav className="bottom-nav" aria-label={messages.primaryNavLabel || 'Primary Navigation'}>
             <div ref={tabList} className={`bottom-nav__list${compact ? ' bottom-nav__list--compact' : ''}`} role="tablist">
                 {items.map((item, idx) => {
                     const isActive = activeTab === item.id;
                     return (
                         <button
                             key={item.id}
+                            ref={(el) => {
+                                tabRefs.current[idx] = el;
+                            }}
                             id={`nav-${item.id}`}
                             type="button"
                             role="tab"

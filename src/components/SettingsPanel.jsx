@@ -75,7 +75,7 @@ export function SettingsPanel({
         <section hidden={hidden} id="settings-panel" className="settings-panel split-layout" aria-label={messages.settingsTitle}>
             <div className="split-region split-region--primary">
                 <header className="settings-panel__header">
-                    <h2 className="settings-panel__title">{messages.settingsTitle}</h2>
+                    <h1 className="settings-panel__title">{messages.settingsTitle}</h1>
                 </header>
 
                 <div className="settings-group">
@@ -286,10 +286,10 @@ export function SettingsPanel({
 
                 <div className="settings-group settings-guide-row">
                     <div className="settings-guide-row__copy">
-                        <h3 className="settings-guide-row__title">
+                        <h2 className="settings-guide-row__title">
                             <IconBookOpen className="settings-icon settings-icon--title" />
                             <span>{messages.settingsGuideTitle}</span>
-                        </h3>
+                        </h2>
                         <p className="settings-guide-row__desc">{messages.settingsGuideDesc}</p>
                     </div>
                     <button

@@ -12,7 +12,6 @@ export function SetupView({
     isNativeApp,
     onVariantChange,
     onDifficultyChange,
-    onOpenSettings,
     onPlay,
     onResume,
     onOpenLegalPage,

@@ -27,6 +27,7 @@ export function useGameTimersAndModals({
     stateRef,
     onlineClientRef,
     setGameState,
+    onTickElapsed = null,
     setPendingConfirm,
     setLegalPage,
     syncLobbyProgress,
@@ -38,6 +39,19 @@ export function useGameTimersAndModals({
                 return;
             }
             if (stateRef.current.isHelpOpen || stateRef.current.pendingConfirm || stateRef.current.ticTacToeActive) {
+                return;
+            }
+            if (onTickElapsed) {
+                const cur = stateRef.current.gameState;
+                if (!cur || stateRef.current.isSpectating || stateRef.current.mode === 'watch' || cur.status === 'solved') {
+                    return;
+                }
+                const nextElapsed = (cur.elapsedSeconds || 0) + 1;
+                cur.elapsedSeconds = nextElapsed;
+                if (stateRef.current.mode === 'solo' && nextElapsed % 5 === 0) {
+                    saveSoloGameSnapshot(cur, stateRef.current.onlineGameId, stateRef.current.boardBackground?.id || null);
+                }
+                onTickElapsed(nextElapsed);
                 return;
             }
             setGameState((prev) => {
@@ -53,7 +67,7 @@ export function useGameTimersAndModals({
             });
         }, 1000);
         return () => clearInterval(timer);
-    }, [isPlayingGame, navTab, setGameState, stateRef]);
+    }, [isPlayingGame, navTab, onTickElapsed, setGameState, stateRef]);
 
     // 5-second state reconciliation & lobby heartbeat
     useEffect(() => {

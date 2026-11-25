@@ -49,6 +49,17 @@ export default defineConfig(({ mode }) => {
         build: {
             outDir: isItch ? 'dist-itch' : 'dist',
             emptyOutDir: true,
+            rolldownOptions: {
+                output: {
+                    codeSplitting: {
+                        groups: [
+                            { name: 'vendor-react', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+                            { name: 'vendor-centrifuge', test: /[\\/]node_modules[\\/]centrifuge[\\/]/ },
+                            { name: 'board-catalog', test: /board-background-catalog\.json$/ },
+                        ],
+                    },
+                },
+            },
         },
         test: {
             environment: 'jsdom',

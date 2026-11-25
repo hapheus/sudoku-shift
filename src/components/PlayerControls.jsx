@@ -4,7 +4,22 @@ import { getDigitCounts } from '../domain/sudoku-engine.js';
 import { getVariantSpec, inferVariantFromBoardLength } from '../domain/sudoku-generator.js';
 import enMessages from '../locales/en.json';
 
-export function PlayerControls({
+function handleToolbarKeyDown(event) {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    const buttons = Array.from(event.currentTarget.querySelectorAll('button:not(:disabled)'));
+    const currentIndex = buttons.indexOf(document.activeElement);
+    if (buttons.length < 2 || currentIndex === -1) return;
+    let nextIndex = currentIndex;
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % buttons.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = buttons.length - 1;
+    event.preventDefault();
+    event.stopPropagation();
+    buttons[nextIndex]?.focus();
+}
+
+export const PlayerControls = React.memo(function PlayerControls({
     board,
     variant = null,
     notesMode,
@@ -118,14 +133,14 @@ export function PlayerControls({
     };
 
     return (
-        <section id="player-controls" className="player-controls" aria-label="Puzzle Controls">
-            <div className="tool-bar" role="toolbar" aria-label="Cell tools">
+        <section id="player-controls" className="player-controls" aria-label={messages.puzzleControlsLabel || 'Puzzle Controls'}>
+            <div className="tool-bar" role="toolbar" aria-label={messages.cellToolsLabel || 'Cell tools'} onKeyDown={handleToolbarKeyDown}>
                 <button
                     type="button"
                     id="undo-btn"
                     className="tool-btn"
                     disabled={!canUndo || isSolved}
-                    title="Undo last move (Ctrl/Cmd+Z)"
+                    title={messages.undoTooltip || 'Undo last move (Ctrl/Cmd+Z)'}
                     onClick={onUndo}
                 >
                     <span className="tool-btn__content">
@@ -141,7 +156,7 @@ export function PlayerControls({
                     id="erase-btn"
                     className="tool-btn"
                     disabled={isSolved}
-                    title="Erase cell (Backspace / Delete / 0)"
+                    title={messages.eraseTooltip || 'Erase cell (Backspace / Delete / 0)'}
                     onClick={onErase}
                 >
                     <span className="tool-btn__content">
@@ -158,7 +173,7 @@ export function PlayerControls({
                     className={`tool-btn ${notesMode ? 'tool-btn--active' : ''}`}
                     aria-pressed={notesMode}
                     disabled={isSolved}
-                    title="Toggle pencil notes (N)"
+                    title={messages.notesTooltip || 'Toggle pencil notes (N)'}
                     onClick={onToggleNotes}
                 >
                     <span className="tool-btn__content">
@@ -175,7 +190,9 @@ export function PlayerControls({
                     id="hint-btn"
                     className={`tool-btn ${isHintArmed ? 'tool-btn--hint-armed' : ''}`}
                     disabled={isSolved}
-                    title={isHintArmed ? 'Tap again to fill the highlighted cell' : 'Highlight a logically solvable cell'}
+                    title={isHintArmed
+                        ? (messages.hintTooltipArmed || 'Tap again to fill the highlighted cell')
+                        : (messages.hintTooltipIdle || 'Highlight a logically solvable cell')}
                     onClick={onLocalHint}
                 >
                     <span className="tool-btn__content">
@@ -190,7 +207,7 @@ export function PlayerControls({
             <div
                 className={`numpad ${maxDigit === 6 ? 'numpad--6x6' : ''}`}
                 role="group"
-                aria-label={`Number pad 1 to ${maxDigit}`}
+                aria-label={(messages.numberPadLabel || 'Number pad 1 to {max}').replace('{max}', String(maxDigit))}
             >
                 {digits.map((d) => {
                     const remaining = Math.max(0, gridSize - (counts[d] || 0));
@@ -198,6 +215,14 @@ export function PlayerControls({
                     const isDisabled = isSolved || (isComplete && !notesMode);
                     const isActiveDigit = activeDigit === d;
                     const isMatchedDigit = !isActiveDigit && highlightedDigit === d;
+
+                    const digitAriaLabel = isComplete
+                        ? (messages.digitCompleteAria || '{digit}, all {gridSize} placed')
+                            .replace('{digit}', String(d))
+                            .replace('{gridSize}', String(gridSize))
+                        : (messages.digitRemainingAria || 'Enter {digit}, {remaining} remaining')
+                            .replace('{digit}', String(d))
+                            .replace('{remaining}', String(remaining));
 
                     return (
                         <button
@@ -212,7 +237,7 @@ export function PlayerControls({
                             data-digit={d}
                             disabled={isDisabled}
                             aria-pressed={activeDigit !== null ? isActiveDigit : undefined}
-                            aria-label={isComplete ? `${d}, all ${gridSize} placed` : `Enter ${d}, ${remaining} remaining`}
+                            aria-label={digitAriaLabel}
                             onClick={() => onDigit(d)}
                         >
                             <span className="numpad-btn__digit">{d}</span>{' '}
@@ -242,6 +267,7 @@ export function PlayerControls({
                             ? (messages.shiftHintNoCell || 'Select a cell to shift its row or column within its box')
                             : undefined
                     }
+                    onKeyDown={handleToolbarKeyDown}
                 >
                     <div className="shift-bar__label-group">
                         <span className="shift-bar__label" aria-hidden="true">
@@ -260,7 +286,7 @@ export function PlayerControls({
             )}
 
             {notesMode && !isSolved && (onFillCandidates || onClearNotes) && (
-                <div className="notes-quick-bar" role="group" aria-label="Pencil note helpers">
+                <div className="notes-quick-bar" role="group" aria-label={messages.pencilNoteHelpersLabel || 'Pencil note helpers'}>
                     {onFillCandidates && (
                         <button
                             type="button"
@@ -285,4 +311,4 @@ export function PlayerControls({
             )}
         </section>
     );
-}
+});
