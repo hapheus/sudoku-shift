@@ -8,7 +8,7 @@ import path from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { chromium } from '@playwright/test';
+import { chromium, webkit } from '@playwright/test';
 import { preview } from 'vite';
 import { buildCleanXcodeEnv } from './ios-device.mjs';
 import { startLocalCentrifugo } from './promo/recorder.mjs';
@@ -173,6 +173,81 @@ function buildCaptureApp(directory, language, wsUrl) {
         appPath: path.join(directory, 'build/Build/Products/Debug-iphonesimulator/App.app'),
         distDir: path.join(directory, 'dist'),
     };
+}
+
+async function captureIpadLandscapeWebkit({
+    distDir,
+    rawDir,
+    outputDir,
+    language,
+    wsUrl,
+    profile,
+    scenes,
+}) {
+    const server = await preview({
+        root,
+        build: { outDir: distDir },
+        preview: { host: '127.0.0.1', port: 0 },
+        logLevel: 'warn',
+    });
+    const { port } = server.httpServer.address();
+    const baseUrl = `http://127.0.0.1:${port}`;
+    const browser = await webkit.launch({ headless: true });
+    const results = [];
+
+    try {
+        const expectedWidth = profile.height;
+        const expectedHeight = profile.width;
+        const context = await browser.newContext({
+            viewport: { width: expectedWidth / 2, height: expectedHeight / 2 },
+            deviceScaleFactor: 2,
+            locale: language === 'de' ? 'de-DE' : 'en-US',
+            hasTouch: true,
+            isMobile: false,
+        });
+        await context.addInitScript({
+            content: `${screenshotBootstrap(language, wsUrl)}\n${fs.readFileSync(prepareScreenshotPath, 'utf8')}`,
+        });
+        const page = await context.newPage();
+        await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+
+        for (const { screen, theme } of scenes) {
+            const outcome = await page.evaluate(
+                (req) => window.prepareScreenshot(req),
+                { screen, theme, orientation: 'landscape' },
+            );
+            if (outcome !== 'ready') {
+                throw new Error(`WebKit capture failed for ${screen} (${theme}): ${outcome}`);
+            }
+            await setTimeout(150);
+
+            const sceneId = `${screen}-${theme}`;
+            const rawPath = path.join(rawDir, `${language}-${profile.id}-landscape-${sceneId}.png`);
+            const outPath = path.join(outputDir, language, profile.id, 'landscape', `${sceneId}.png`);
+            await page.screenshot({ path: rawPath, fullPage: false });
+
+            const info = exportAppStorePng({
+                rawPath,
+                outPath,
+                expectedWidth,
+                expectedHeight,
+                allowScale: false,
+            });
+            results.push({
+                lang: language,
+                device: profile.id,
+                orientation: 'landscape',
+                scene: sceneId,
+                ...info,
+            });
+            console.log(`  OK ${language}/${profile.id}/landscape/${sceneId} (${info.width}x${info.height}, ${info.pixFmt}) [webkit]`);
+        }
+        await context.close();
+        return results;
+    } finally {
+        await browser.close().catch(() => {});
+        await server.close().catch(() => {});
+    }
 }
 
 async function startLiveWatchHost({ distDir, language, wsUrl }) {
@@ -403,6 +478,20 @@ async function main() {
                     xcrun(['simctl', 'launch', '--terminate-running-process', sim.udid, bundleId]);
 
                     for (const orientation of orientations) {
+                        if (profile.id === 'ipad-13' && orientation === 'landscape') {
+                            console.log('  Capturing ipad-13 landscape via Playwright WebKit (2752x2064)...');
+                            const webkitResults = await captureIpadLandscapeWebkit({
+                                distDir,
+                                rawDir,
+                                outputDir,
+                                language: values.lang,
+                                wsUrl,
+                                profile,
+                                scenes,
+                            });
+                            results.push(...webkitResults);
+                            continue;
+                        }
                         if (isDuo) {
                             const posture = profile.id === 'iphone-duo-inner' ? 'inner' : 'outer';
                             setDuoOrientation(sim.udid, posture, orientation);
