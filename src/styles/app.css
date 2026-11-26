@@ -4087,6 +4087,7 @@ input:focus-visible {
     line-height: 1.25;
     position: relative;
     overflow: hidden;
+    transition: none;
 }
 
 .f7-shell .segmented-strong {
