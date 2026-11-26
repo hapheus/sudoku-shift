@@ -308,9 +308,12 @@ function captureDisplay({ udid, display, rawPath }) {
 
 function writeManifest(outputDir, results) {
     const manifestPath = path.join(outputDir, 'manifest.json');
-    const existing = fs.existsSync(manifestPath)
-        ? JSON.parse(fs.readFileSync(manifestPath, 'utf8')).screenshots ?? []
-        : [];
+    let existing = [];
+    try {
+        existing = JSON.parse(fs.readFileSync(manifestPath, 'utf8')).screenshots ?? [];
+    } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+    }
 
     const merged = new Map();
     for (const item of existing) {
