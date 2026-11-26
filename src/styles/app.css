@@ -1163,7 +1163,9 @@ textarea {
     min-height: var(--touch-min);
     padding: 0.5rem 1.125rem;
     background: var(--color-success);
-    color: var(--color-on-primary);
+    color: var(--color-on-success);
+    --f7-button-fill-bg-color: var(--color-success);
+    --f7-button-fill-text-color: var(--color-on-success);
     border: none;
     border-radius: var(--radius-sm);
     font-size: 0.875rem;
@@ -1816,6 +1818,7 @@ input:focus-visible {
     --color-selected-cell: #1e365c;
     --color-active-tool-bg: rgba(96, 165, 250, 0.18);
     --color-success: #4ade80;
+    --color-on-success: #052e16;
     --color-success-bg: rgba(74, 222, 128, 0.14);
     --color-unit-complete-bg: rgba(74, 222, 128, 0.3);
     --color-error: #f87171;
@@ -1873,6 +1876,7 @@ input:focus-visible {
     --color-selected-cell: #dbeafe;
     --color-active-tool-bg: #dbeafe;
     --color-success: #15803d;
+    --color-on-success: #ffffff;
     --color-success-bg: rgba(21, 128, 61, 0.11);
     --color-unit-complete-bg: rgba(21, 128, 61, 0.22);
     --color-error: #b91c1c;
@@ -2262,7 +2266,7 @@ input:focus-visible {
     color: var(--color-text-muted);
     cursor: pointer;
     user-select: none;
-    transition: background-color 150ms ease, color 150ms ease;
+    transition: none;
 }
 
 .segmented-label:hover {
@@ -2492,8 +2496,10 @@ input:focus-visible {
     background: var(--color-nav-active-bg);
 }
 
-.bottom-nav__label {
+.bottom-nav .tabbar-label.bottom-nav__label {
     white-space: nowrap;
+    max-width: none;
+    overflow: visible;
 }
 
 .bottom-nav__list--compact .bottom-nav__item {
@@ -3793,7 +3799,17 @@ input:focus-visible {
 }
 
 .landscape-screen__main {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    overflow: auto;
+}
+
+.landscape-screen__main > * {
+    flex-shrink: 0;
 }
 
 .landscape-screen__content {
@@ -4267,7 +4283,7 @@ input:focus-visible {
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    z-index: 60;
+    z-index: 50;
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
@@ -4306,10 +4322,10 @@ input:focus-visible {
         -webkit-backdrop-filter: saturate(180%) blur(20px);
     }
 
-    .landscape-screen .play-setup {
-        margin-block: 0;
-        justify-content: flex-start;
-        padding-top: 0.25rem;
+    .gameplay-stage__toolbar:has([aria-expanded="true"]) {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        z-index: auto;
     }
 
     .play-setup__header.f7-large-header {
@@ -4456,12 +4472,14 @@ input:focus-visible {
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.2;
+    transition: none;
 }
 
 .bottom-nav .tab-link.bottom-nav__item--active {
     color: var(--color-primary-text);
     background: var(--color-nav-active-bg);
     font-weight: 700;
+    transition: none;
 }
 
 .landscape-screen__pane > .bottom-nav.toolbar {

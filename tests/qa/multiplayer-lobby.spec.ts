@@ -116,10 +116,14 @@ for (const theme of ['dark', 'light']) {
             const watch = page.locator('#watch-directory');
             expect(await watch.evaluate(directory => {
                 const pane = directory.parentElement!.getBoundingClientRect();
-                const selectors = ['#watch-search-input', '#watch-joins-filter', '#watch-sizes-filter', '.watch-empty'];
-                return selectors.every(selector => {
+                const fullWidth = ['.watch-filters', '.watch-empty'];
+                const contained = ['#watch-search-input', '#watch-joins-filter', '#watch-sizes-filter'];
+                return fullWidth.every(selector => {
                     const bounds = directory.querySelector(selector)!.getBoundingClientRect();
                     return Math.abs(bounds.left - pane.left) <= 1 && Math.abs(bounds.right - pane.right) <= 1;
+                }) && contained.every(selector => {
+                    const bounds = directory.querySelector(selector)!.getBoundingClientRect();
+                    return bounds.left >= pane.left - 1 && bounds.right <= pane.right + 1;
                 });
             })).toBe(true);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
