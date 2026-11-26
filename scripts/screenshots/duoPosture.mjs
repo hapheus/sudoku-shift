@@ -184,3 +184,17 @@ export function setDuoPosture(udid, targetPosture) {
         );
     }
 }
+
+export function setDuoOrientation(udid, posture, orientation) {
+    const deviceOrient = posture === 'inner'
+        ? (orientation === 'landscape' ? 'portrait' : 'landscape-left')
+        : (orientation === 'landscape' ? 'landscape-left' : 'portrait');
+    runHelper(udid, ['orient', deviceOrient]);
+    sleepSync(700);
+}
+
+export function setSimulatorOrientation(udid, orientation) {
+    const deviceOrient = orientation === 'landscape' ? 'landscape-left' : 'portrait';
+    runHelper(udid, ['orient', deviceOrient]);
+    sleepSync(700);
+}

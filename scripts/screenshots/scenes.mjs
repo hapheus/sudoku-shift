@@ -4,7 +4,7 @@ import { createSudokuGame, fillCandidateNotes, serializeGameState, setCellValue 
 
 export const prepareScreenshotPath = fileURLToPath(new URL('./prepare.js', import.meta.url));
 export const screenshotScenes = ['dark', 'light'].flatMap((theme) =>
-    ['setup', 'game', 'settings', 'watch'].map((screen) => ({ screen, theme })));
+    ['setup', 'game', 'settings', 'watch', 'watch-live', 'retro', 'night-ghost'].map((screen) => ({ screen, theme })));
 
 export function localScreenshotBroker(value) {
     if (!value) return undefined;

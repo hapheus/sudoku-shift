@@ -8,9 +8,12 @@ import path from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { chromium } from '@playwright/test';
+import { preview } from 'vite';
 import { buildCleanXcodeEnv } from './ios-device.mjs';
+import { startLocalCentrifugo } from './promo/recorder.mjs';
 import { DEVICE_PROFILES, resolveDeviceProfiles } from './screenshots/devices.mjs';
-import { getDuoAngle, setDuoPosture } from './screenshots/duoPosture.mjs';
+import { getDuoAngle, setDuoOrientation, setDuoPosture, setSimulatorOrientation } from './screenshots/duoPosture.mjs';
 import { exportAppStorePng } from './screenshots/exportPng.mjs';
 import {
     localScreenshotBroker,
@@ -30,12 +33,13 @@ const env = buildCleanXcodeEnv({
 
 const usage = [
     'Usage: npm run appstore:screenshots -- [options]',
-    '  --lang <en|de>          App language (default: en)',
-    '  --devices <ids|all>     Comma-separated device IDs (default: iphone-dynamic-island,iphone-duo-outer,iphone-duo-inner,ipad-13)',
-    '  --themes <all|dark|light> Themes to capture (default: all)',
-    '  --out <dir>             Output root (default: artifacts/app-store/screenshots)',
-    '  --ws-url <url>          Optional local loopback WebSocket broker URL for live Watch demo',
-    '  --list                  List available devices and scenes and exit',
+    '  --lang <en|de>                App language (default: en)',
+    '  --devices <ids|all>           Comma-separated device IDs (default: iphone-dynamic-island,iphone-duo-outer,iphone-duo-inner,ipad-13)',
+    '  --orientations <all|portrait|landscape> Orientations to capture (default: all)',
+    '  --themes <all|dark|light>     Themes to capture (default: all)',
+    '  --out <dir>                   Output root (default: artifacts/app-store/screenshots)',
+    '  --ws-url <url>                Optional local loopback WebSocket broker URL for live Watch demo',
+    '  --list                        List available devices and scenes and exit',
 ].join('\n');
 
 function xcrun(args, options = {}) {
@@ -140,6 +144,15 @@ function buildCaptureApp(directory, language, wsUrl) {
     fs.writeFileSync(index, html.replace('<script type="module"', `${bootstrap}<script type="module"`));
     fs.copyFileSync(prepareScreenshotPath, path.join(publicDir, 'prepare-screenshot.js'));
     fs.copyFileSync(path.join(templates, 'SceneDelegate.swift'), path.join(app, 'SceneDelegate.swift'));
+    const infoPlistPath = path.join(app, 'Info.plist');
+    const infoPlist = fs.readFileSync(infoPlistPath, 'utf8');
+    fs.writeFileSync(
+        infoPlistPath,
+        infoPlist.replace(
+            /<key>UIRequiresFullScreen<\/key>\s*<false\/>/,
+            '<key>UIRequiresFullScreen</key>\n\t<true/>',
+        ),
+    );
 
     console.log('Building Debug iOS Simulator capture app (xcodebuild)...');
     xcrun([
@@ -156,14 +169,46 @@ function buildCaptureApp(directory, language, wsUrl) {
         stdio: 'inherit',
         timeout: 600_000,
     });
-    return path.join(directory, 'build/Build/Products/Debug-iphonesimulator/App.app');
+    return {
+        appPath: path.join(directory, 'build/Build/Products/Debug-iphonesimulator/App.app'),
+        distDir: path.join(directory, 'dist'),
+    };
 }
 
-async function prepareScene(documents, screen, theme) {
+async function startLiveWatchHost({ distDir, language, wsUrl }) {
+    const server = await preview({
+        root,
+        build: { outDir: distDir },
+        preview: { host: '127.0.0.1', port: 0 },
+        logLevel: 'warn',
+    });
+    const { port } = server.httpServer.address();
+    const baseUrl = `http://127.0.0.1:${port}`;
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({ viewport: { width: 900, height: 700 } });
+    await context.addInitScript({
+        content: screenshotBootstrap(language, wsUrl).replace('RiverPuzzle', 'HostNova'),
+    });
+    const page = await context.newPage();
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await page.locator('#resume-game-btn').waitFor({ state: 'visible', timeout: 15_000 });
+    await page.locator('#resume-game-btn').click();
+    await page.locator('#sudoku-board .sudoku-cell').first().waitFor({ state: 'visible', timeout: 15_000 });
+    await setTimeout(1200);
+    return {
+        async stop() {
+            await context.close().catch(() => {});
+            await browser.close().catch(() => {});
+            await server.close().catch(() => {});
+        },
+    };
+}
+
+async function prepareScene(documents, screen, theme, orientation) {
     const id = randomUUID();
     const requestPath = path.join(documents, 'screenshot-request.json');
     const nextRequest = `${requestPath}.tmp`;
-    fs.writeFileSync(nextRequest, JSON.stringify({ id, screen, theme }));
+    fs.writeFileSync(nextRequest, JSON.stringify({ id, screen, theme, orientation }));
     fs.renameSync(nextRequest, requestPath);
     const replyPath = path.join(documents, 'screenshot-ready.json');
     for (let attempt = 0; attempt < 160; attempt++) {
@@ -174,7 +219,7 @@ async function prepareScene(documents, screen, theme) {
         if (reply.outcome !== 'ready') throw new Error(reply.outcome);
         return reply;
     }
-    throw new Error(`The simulator did not render ${screen} (${theme}).`);
+    throw new Error(`The simulator did not render ${screen} (${theme}, ${orientation}).`);
 }
 
 function captureDisplay({ udid, display, rawPath }) {
@@ -194,12 +239,13 @@ function writeManifest(outputDir, results) {
 
     const merged = new Map();
     for (const item of existing) {
-        merged.set(`${item.lang}/${item.device}/${item.scene}`, item);
+        merged.set(`${item.lang}/${item.device}/${item.orientation ?? 'portrait'}/${item.scene}`, item);
     }
     for (const item of results) {
-        merged.set(`${item.lang}/${item.device}/${item.scene}`, {
+        merged.set(`${item.lang}/${item.device}/${item.orientation}/${item.scene}`, {
             lang: item.lang,
             device: item.device,
+            orientation: item.orientation,
             scene: item.scene,
             width: item.width,
             height: item.height,
@@ -210,7 +256,9 @@ function writeManifest(outputDir, results) {
     }
 
     const sorted = [...merged.values()].sort((a, b) =>
-        `${a.lang}/${a.device}/${a.scene}`.localeCompare(`${b.lang}/${b.device}/${b.scene}`),
+        `${a.lang}/${a.device}/${a.orientation ?? 'portrait'}/${a.scene}`.localeCompare(
+            `${b.lang}/${b.device}/${b.orientation ?? 'portrait'}/${b.scene}`,
+        ),
     );
 
     fs.mkdirSync(outputDir, { recursive: true });
@@ -233,6 +281,7 @@ async function main() {
             list: { type: 'boolean' },
             lang: { type: 'string', default: 'en' },
             devices: { type: 'string' },
+            orientations: { type: 'string', default: 'all' },
             themes: { type: 'string', default: 'all' },
             out: { type: 'string' },
             'ws-url': { type: 'string' },
@@ -265,13 +314,18 @@ async function main() {
     if (!['all', 'dark', 'light'].includes(values.themes)) {
         throw new Error(`Unsupported --themes "${values.themes}". Use "all", "dark", or "light".`);
     }
+    if (!['all', 'portrait', 'landscape'].includes(values.orientations)) {
+        throw new Error(`Unsupported --orientations "${values.orientations}". Use "all", "portrait", or "landscape".`);
+    }
 
-    const wsUrl = localScreenshotBroker(values['ws-url']);
+    let wsUrl = localScreenshotBroker(values['ws-url']);
     const devices = resolveDeviceProfiles(values.devices);
+    const orientations = values.orientations === 'all' ? ['portrait', 'landscape'] : [values.orientations];
     const scenes = values.themes === 'all'
         ? screenshotScenes
         : screenshotScenes.filter((scene) => scene.theme === values.themes);
     const outputDir = path.resolve(values.out ?? path.join(root, 'artifacts/app-store/screenshots'));
+    const needsLiveWatch = scenes.some((scene) => scene.screen === 'watch-live');
 
     const simulators = listAvailableSimulators();
     const bySim = new Map();
@@ -293,9 +347,26 @@ async function main() {
     const rawDir = path.join(workDir, 'raw');
     fs.mkdirSync(rawDir, { recursive: true });
     const results = [];
+    let broker = null;
+    let liveHost = null;
 
     try {
-        const appPath = buildCaptureApp(workDir, values.lang, wsUrl);
+        if (!wsUrl && needsLiveWatch) {
+            console.log('Starting temporary Centrifugo broker on 127.0.0.1:18082 for live Watch Mode...');
+            broker = await startLocalCentrifugo({
+                root,
+                port: 18082,
+                containerName: 'sudoku-appstore-centrifugo',
+            });
+            wsUrl = broker.wsUrl;
+        }
+
+        const { appPath, distDir } = buildCaptureApp(workDir, values.lang, wsUrl);
+
+        if (needsLiveWatch && wsUrl) {
+            console.log('Starting live Host session (HostNova) for Watch Mode spectating...');
+            liveHost = await startLiveWatchHost({ distDir, language: values.lang, wsUrl });
+        }
 
         for (const { sim, profiles } of bySim.values()) {
             const isDuo = sim.name.includes('Duo') || profiles.some((p) => p.id.startsWith('iphone-duo'));
@@ -315,6 +386,11 @@ async function main() {
 
                 for (const profile of profiles) {
                     if (isDuo) {
+                        try {
+                            xcrun(['simctl', 'terminate', sim.udid, bundleId]);
+                        } catch {
+                            // Not running yet
+                        }
                         const posture = profile.id === 'iphone-duo-inner' ? 'inner' : 'outer';
                         console.log(`  Setting iPhone Duo posture -> ${posture} (display ${profile.simulator.display})...`);
                         setDuoPosture(sim.udid, posture);
@@ -326,36 +402,48 @@ async function main() {
                     }
                     xcrun(['simctl', 'launch', '--terminate-running-process', sim.udid, bundleId]);
 
-                    for (const { screen, theme } of scenes) {
-                        setAppearance(sim.udid, theme);
-                        await prepareScene(documents, screen, theme);
-                        await setTimeout(150);
+                    for (const orientation of orientations) {
+                        if (isDuo) {
+                            const posture = profile.id === 'iphone-duo-inner' ? 'inner' : 'outer';
+                            setDuoOrientation(sim.udid, posture, orientation);
+                        } else {
+                            setSimulatorOrientation(sim.udid, orientation);
+                        }
+                        const expectedWidth = orientation === 'landscape' ? profile.height : profile.width;
+                        const expectedHeight = orientation === 'landscape' ? profile.width : profile.height;
 
-                        const sceneId = `${screen}-${theme}`;
-                        const rawPath = path.join(rawDir, `${values.lang}-${profile.id}-${sceneId}.png`);
-                        const outPath = path.join(outputDir, values.lang, profile.id, `${sceneId}.png`);
+                        for (const { screen, theme } of scenes) {
+                            setAppearance(sim.udid, theme);
+                            await prepareScene(documents, screen, theme, orientation);
+                            await setTimeout(150);
 
-                        captureDisplay({
-                            udid: sim.udid,
-                            display: profile.simulator.display,
-                            rawPath,
-                        });
+                            const sceneId = `${screen}-${theme}`;
+                            const rawPath = path.join(rawDir, `${values.lang}-${profile.id}-${orientation}-${sceneId}.png`);
+                            const outPath = path.join(outputDir, values.lang, profile.id, orientation, `${sceneId}.png`);
 
-                        const info = exportAppStorePng({
-                            rawPath,
-                            outPath,
-                            expectedWidth: profile.width,
-                            expectedHeight: profile.height,
-                            allowScale: false,
-                        });
+                            captureDisplay({
+                                udid: sim.udid,
+                                display: profile.simulator.display,
+                                rawPath,
+                            });
 
-                        results.push({
-                            lang: values.lang,
-                            device: profile.id,
-                            scene: sceneId,
-                            ...info,
-                        });
-                        console.log(`  OK ${values.lang}/${profile.id}/${sceneId} (${info.width}x${info.height}, ${info.pixFmt})`);
+                            const info = exportAppStorePng({
+                                rawPath,
+                                outPath,
+                                expectedWidth,
+                                expectedHeight,
+                                allowScale: false,
+                            });
+
+                            results.push({
+                                lang: values.lang,
+                                device: profile.id,
+                                orientation,
+                                scene: sceneId,
+                                ...info,
+                            });
+                            console.log(`  OK ${values.lang}/${profile.id}/${orientation}/${sceneId} (${info.width}x${info.height}, ${info.pixFmt})`);
+                        }
                     }
                 }
             } finally {
@@ -381,6 +469,8 @@ async function main() {
         console.log(`\nDone! Generated ${results.length} App Store screenshot(s) in ${outputDir}`);
         console.log(`Manifest: ${manifestPath}`);
     } finally {
+        await liveHost?.stop();
+        broker?.stop();
         fs.rmSync(workDir, { recursive: true, force: true });
     }
 }
