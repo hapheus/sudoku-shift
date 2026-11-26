@@ -894,6 +894,7 @@ export function App() {
                                 difficulty={difficulty}
                                 canResumeGame={canResumeGame}
                                 isNativeApp={isNativeApp}
+                                landscapeArtwork={landscapeArtwork}
                                 onVariantChange={handleVariantChange}
                                 onDifficultyChange={handleDifficultyChange}
                                 onPlay={handlePlayFromSetup}
