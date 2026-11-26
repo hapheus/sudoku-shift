@@ -25,6 +25,7 @@ export function GamePlayView({
     currentMembers,
     spectatedGameMode,
     gameState,
+    elapsedSeconds = null,
     ticTacToeGame = null,
     onTicTacToeMove = () => {},
     onReconnect,
@@ -58,6 +59,7 @@ export function GamePlayView({
     const notifications = <>{notices}{actionFeedback && (
         <div id="action-feedback" className="action-feedback" role="status">{actionFeedback}</div>
     )}</>;
+    const displayElapsedSeconds = elapsedSeconds ?? gameState.elapsedSeconds ?? 0;
     const status = (
         <StatusBanner
             connectionStatus={connectionStatus}
@@ -68,6 +70,7 @@ export function GamePlayView({
             currentMembers={currentMembers}
             spectatedGameMode={spectatedGameMode}
             gameState={gameState}
+            elapsedSeconds={displayElapsedSeconds}
             onReconnect={onReconnect}
             onContinueSolo={onContinueSolo}
             messages={messages}
@@ -100,6 +103,7 @@ export function GamePlayView({
             onPointerDownCapture={nightGhost ? dismissNightGhost : undefined}
             onKeyDownCapture={nightGhost ? dismissNightGhost : undefined}
         >
+            <h1 className="sr-only">{mainAriaLabel}</h1>
             {landscapeLayout && toolbar}
 
             <div className="gameplay-stage split-panes">
@@ -153,7 +157,7 @@ export function GamePlayView({
                             {gameState.status === 'solved' ? (
                                 <SolveSummary
                                     difficulty={gameState.difficulty}
-                                    elapsedSeconds={gameState.elapsedSeconds}
+                                    elapsedSeconds={displayElapsedSeconds}
                                     mode={multiplayerResult ? 'online' : 'solo'}
                                     playerResults={playerResults}
                                     isSpectating={isSpectating}

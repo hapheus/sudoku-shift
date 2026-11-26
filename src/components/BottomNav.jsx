@@ -8,6 +8,7 @@ export function BottomNav({
     messages = enMessages,
 }) {
     const tabList = useRef(null);
+    const tabRefs = useRef([]);
     const [compact, setCompact] = useState(false);
 
     useLayoutEffect(() => {
@@ -62,36 +63,41 @@ export function BottomNav({
     ];
 
     const handleKeyDown = (e, idx) => {
+        let nextIdx = null;
         if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            onSelectTab(items[(idx + 1) % items.length].id);
+            nextIdx = (idx + 1) % items.length;
         } else if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            onSelectTab(items[(idx - 1 + items.length) % items.length].id);
+            nextIdx = (idx - 1 + items.length) % items.length;
         } else if (e.key === 'Home') {
-            e.preventDefault();
-            onSelectTab(items[0].id);
+            nextIdx = 0;
         } else if (e.key === 'End') {
+            nextIdx = items.length - 1;
+        }
+        if (nextIdx !== null) {
             e.preventDefault();
-            onSelectTab(items[items.length - 1].id);
+            onSelectTab(items[nextIdx].id);
+            tabRefs.current[nextIdx]?.focus();
         }
     };
 
     return (
-        <nav className="bottom-nav" aria-label="Primary Navigation">
-            <div ref={tabList} className={`bottom-nav__list${compact ? ' bottom-nav__list--compact' : ''}`} role="tablist">
+        <nav className="bottom-nav toolbar toolbar-bottom tabbar tabbar-icons" aria-label={messages.primaryNavLabel || 'Primary Navigation'}>
+            <div ref={tabList} className={`toolbar-inner bottom-nav__list${compact ? ' bottom-nav__list--compact' : ''}`} role="tablist">
                 {items.map((item, idx) => {
                     const isActive = activeTab === item.id;
                     return (
                         <button
                             key={item.id}
+                            ref={(el) => {
+                                tabRefs.current[idx] = el;
+                            }}
                             id={`nav-${item.id}`}
                             type="button"
                             role="tab"
                             aria-label={item.label}
                             aria-selected={isActive}
                             tabIndex={isActive || (activeTab == null && idx === 0) ? 0 : -1}
-                            className={`bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''}`}
+                            className={`tab-link bottom-nav__item ${isActive ? 'tab-link-active bottom-nav__item--active' : ''}`}
                             onClick={() => onSelectTab(item.id)}
                             onKeyDown={(e) => handleKeyDown(e, idx)}
                         >
@@ -99,7 +105,7 @@ export function BottomNav({
                                 {item.icon}
                                 {item.badge && <span className="bottom-nav__dot" aria-hidden="true" />}
                             </span>
-                            <span className="bottom-nav__label" aria-hidden="true">{item.label}</span>
+                            <span className="tabbar-label bottom-nav__label" aria-hidden="true">{item.label}</span>
                         </button>
                     );
                 })}

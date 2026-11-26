@@ -22,10 +22,10 @@ describe('useAppPreferences', () => {
         expect(result.current.theme).toBe('system');
         expect(document.documentElement.dataset.theme).toBe('light');
         expect(document.documentElement.style.colorScheme).toBe('light');
-        expect(meta.content).toBe('#f6f2ea');
+        expect(meta.content).toBe('#f7f5f0');
         act(() => { media.matches = true; media.dispatchEvent(new Event('change')); });
         expect(document.documentElement.dataset.theme).toBe('dark');
-        expect(meta.content).toBe('#13161b');
+        expect(meta.content).toBe('#11141a');
         expect(localStorage.getItem('sudoku_theme')).toBe('system');
         act(() => result.current.setTheme('light'));
         expect(remove).toHaveBeenCalledWith('change', expect.any(Function));

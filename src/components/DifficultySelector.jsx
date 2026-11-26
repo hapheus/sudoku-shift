@@ -12,13 +12,13 @@ export function DifficultySelector({ difficulty, onChange, messages = enMessages
     return (
         <fieldset id="difficulty-group" className="difficulty-group">
             <legend className="difficulty-group__legend">{messages.difficultyLegend}</legend>
-            <div className="difficulty-options">
+            <div className="difficulty-options segmented segmented-strong">
                 {difficulties.map((item) => {
                     const isChecked = difficulty === item.value;
                     return (
                         <label
                             key={item.value}
-                            className={`difficulty-label ${isChecked ? 'difficulty-label--active' : ''}`}
+                            className={`button difficulty-label ${isChecked ? 'button-active difficulty-label--active' : ''}`}
                         >
                             <input
                                 type="radio"

@@ -1,4 +1,18 @@
 .night-ghost {
+    --ghost-mint: #62dbc7;
+    --ghost-mint-wash: rgba(98, 219, 199, 0.29);
+    --ghost-lilac: #bb91ff;
+    --ghost-lilac-wash: rgba(187, 145, 255, 0.29);
+    --ghost-shadow-deep: rgba(79, 25, 169, 0.62);
+    --ghost-shadow-glow: #b5f8ed;
+    --ghost-body-highlight: #ffffff;
+    --ghost-body-mid: #e2fff9;
+    --ghost-body-cool: #abdedf;
+    --ghost-body-tail: #ba9bec;
+    --ghost-ink: #2e2453;
+    --ghost-tongue: #ed94ae;
+    --ghost-spark-light: #f2fff9;
+    --ghost-spark-lilac: #d9b9ff;
     position: absolute;
     inset: 0;
     z-index: 8;
@@ -29,13 +43,13 @@
 }
 
 .night-ghost-slab--mint {
-    --slab-accent: #62dbc7;
-    --slab-wash: #62dbc74a;
+    --slab-accent: var(--ghost-mint);
+    --slab-wash: var(--ghost-mint-wash);
 }
 
 .night-ghost-slab--lilac {
-    --slab-accent: #bb91ff;
-    --slab-wash: #bb91ff4a;
+    --slab-accent: var(--ghost-lilac);
+    --slab-wash: var(--ghost-lilac-wash);
 }
 
 .night-ghost-slab__cell {
@@ -86,7 +100,7 @@
     inset-inline-start: 50%;
     width: clamp(3.8rem, 15%, 6.2rem);
     aspect-ratio: 1;
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
 }
 
 .night-ghost[data-phase="enter"] .night-ghost__flight {
@@ -98,21 +112,21 @@
 }
 
 @keyframes night-ghost-enter {
-    from { inset-inline-start: 0; transform: translate(-125%, 60%) rotate(-27deg); }
-    72% { transform: translate(-39%, -9%) rotate(6deg); }
-    to { transform: translateX(-50%); }
+    from { transform: translate3d(-460%, 60%, 0) rotate(-27deg); }
+    72% { transform: translate3d(-39%, -9%, 0) rotate(6deg); }
+    to { transform: translate3d(-50%, 0, 0); }
 }
 
 @keyframes night-ghost-exit {
-    from { transform: translateX(-50%); }
-    22% { transform: translate(-68%, 8%) rotate(-9deg); }
-    to { inset-inline-start: 100%; transform: translate(25%, -86%) rotate(32deg); }
+    from { transform: translate3d(-50%, 0, 0); }
+    22% { transform: translate3d(-68%, 8%, 0) rotate(-9deg); }
+    to { transform: translate3d(380%, -86%, 0) rotate(32deg); }
 }
 
 .night-ghost__spirit {
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 3px 12px #4f19a99e) drop-shadow(0 0 6px #b5f8ed);
+    filter: drop-shadow(0 3px 12px var(--ghost-shadow-deep)) drop-shadow(0 0 6px var(--ghost-shadow-glow));
     animation: night-ghost-bob 960ms ease-in-out infinite alternate;
 }
 
@@ -120,7 +134,13 @@
     position: absolute;
     inset: 6% 9% 8%;
     border-radius: 49% 49% 25% 25% / 50% 50% 31% 31%;
-    background: radial-gradient(circle at 37% 25%, #fff 6%, #e2fff9 40%, #abdedf 73%, #ba9bec 100%);
+    background: radial-gradient(
+        circle at 37% 25%,
+        var(--ghost-body-highlight) 6%,
+        var(--ghost-body-mid) 40%,
+        var(--ghost-body-cool) 73%,
+        var(--ghost-body-tail) 100%
+    );
     clip-path: polygon(0 0, 100% 0, 100% 94%, 86% 99%, 72% 85%, 54% 100%, 37% 87%, 19% 100%, 0 93%);
 }
 
@@ -131,7 +151,7 @@
     width: 13%;
     height: 19%;
     border-radius: 48%;
-    color: #2e2453;
+    color: var(--ghost-ink);
     background: currentColor;
 }
 
@@ -155,7 +175,7 @@
     width: 13%;
     height: 15%;
     border-radius: 50%;
-    background: #2e2453;
+    background: var(--ghost-ink);
 }
 
 .night-ghost:is([data-phase="grin"], [data-phase="exit"]) .night-ghost__mouth {
@@ -164,19 +184,19 @@
     width: 44%;
     height: 21%;
     border-radius: 14% 14% 55% 55%;
-    background: linear-gradient(#fff 0 27%, #2e2453 28% 70%, #ed94ae 71%);
+    background: linear-gradient(var(--ghost-body-highlight) 0 27%, var(--ghost-ink) 28% 70%, var(--ghost-tongue) 71%);
 }
 
 .night-ghost__spark {
     position: absolute;
     width: 13%;
     aspect-ratio: 1;
-    background: #f2fff9;
+    background: var(--ghost-spark-light);
     clip-path: polygon(50% 0, 65% 36%, 100% 50%, 65% 64%, 50% 100%, 36% 64%, 0 50%, 36% 36%);
 }
 
 .night-ghost__spark--first { inset: 12% auto auto -6%; }
-.night-ghost__spark--second { inset: 58% -7% auto auto; background: #d9b9ff; }
+.night-ghost__spark--second { inset: 58% -7% auto auto; background: var(--ghost-spark-lilac); }
 
 @keyframes night-ghost-bob {
     from { transform: translateY(-5%); }

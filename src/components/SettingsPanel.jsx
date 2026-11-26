@@ -17,7 +17,7 @@ import {
     IconVolumeX,
 } from './AppIcons.jsx';
 
-const ACTIVE_OPTION_CLASS = 'segmented-label--active';
+const ACTIVE_OPTION_CLASS = 'button-active segmented-label--active';
 
 export function SettingsPanel({
     hidden = false,
@@ -74,12 +74,15 @@ export function SettingsPanel({
     return (
         <section hidden={hidden} id="settings-panel" className="settings-panel split-layout" aria-label={messages.settingsTitle}>
             <div className="split-region split-region--primary">
-                <header className="settings-panel__header">
-                    <h2 className="settings-panel__title">{messages.settingsTitle}</h2>
+                <header className="settings-panel__header f7-section-navbar navbar">
+                    <div className="navbar-bg" />
+                    <div className="navbar-inner">
+                        <h1 className="settings-panel__title title">{messages.settingsTitle}</h1>
+                    </div>
                 </header>
 
-                <div className="settings-group">
-                    <div className="settings-fieldset settings-player-name">
+                <div className="f7-inset-list">
+                    <div className="f7-inset-list__item settings-fieldset settings-player-name">
                         <label htmlFor="player-name-input" className="settings-fieldset__legend">
                             <span className="settings-fieldset__legend-inner">
                                 <IconUserCheck className="settings-icon settings-icon--legend" />
@@ -146,171 +149,179 @@ export function SettingsPanel({
                     </div>
                 </div>
 
-                <div className="settings-group">
-                    <label htmlFor="sudoku-theme" className="settings-fieldset__legend settings-fieldset__legend-inner">
-                        <IconContrast className="settings-icon settings-icon--legend" />
-                        <span>{messages.settingsTheme}</span>
-                    </label>
-                    <select id="sudoku-theme" className="settings-select" value={theme} onChange={(event) => onChangeTheme(event.target.value)}>
-                        <option value="system">{messages.themeSystem}</option>
-                        <option value="dark">{messages.themeDark}</option>
-                        <option value="light">{messages.themeLight}</option>
-                    </select>
+                <div className="f7-inset-list">
+                    <div className="f7-inset-list__item settings-group-row">
+                        <label htmlFor="sudoku-theme" className="settings-fieldset__legend settings-fieldset__legend-inner">
+                            <IconContrast className="settings-icon settings-icon--legend" />
+                            <span>{messages.settingsTheme}</span>
+                        </label>
+                        <select id="sudoku-theme" className="settings-select" value={theme} onChange={(event) => onChangeTheme(event.target.value)}>
+                            <option value="system">{messages.themeSystem}</option>
+                            <option value="dark">{messages.themeDark}</option>
+                            <option value="light">{messages.themeLight}</option>
+                        </select>
+                    </div>
+                    <div className="f7-inset-list__item settings-group-row">
+                        <label htmlFor="sudoku-join-policy" className="settings-fieldset__legend settings-fieldset__legend-inner">
+                            <IconUsers className="settings-icon settings-icon--legend" />
+                            <span>{messages.settingsJoins}</span>
+                        </label>
+                        <select
+                            id="sudoku-join-policy"
+                            className="settings-select"
+                            value={joinPolicy}
+                            onChange={(event) => {
+                                const policy = event.target.value;
+                                onChangeJoinsAllowed(policy !== 'disabled');
+                                onChangeJoinsAutoAccept(policy === 'auto');
+                            }}
+                        >
+                            <option value="disabled">{messages.settingsJoinsOff}</option>
+                            <option value="confirm">{messages.settingsJoinsAllow}</option>
+                            <option value="auto">{messages.settingsJoinsAutoAccept}</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div className="split-region split-region--secondary">
-                <div className="settings-group">
-                    <label htmlFor="sudoku-join-policy" className="settings-fieldset__legend settings-fieldset__legend-inner">
-                        <IconUsers className="settings-icon settings-icon--legend" />
-                        <span>{messages.settingsJoins}</span>
-                    </label>
-                    <select
-                        id="sudoku-join-policy"
-                        className="settings-select"
-                        value={joinPolicy}
-                        onChange={(event) => {
-                            const policy = event.target.value;
-                            onChangeJoinsAllowed(policy !== 'disabled');
-                            onChangeJoinsAutoAccept(policy === 'auto');
-                        }}
-                    >
-                        <option value="disabled">{messages.settingsJoinsOff}</option>
-                        <option value="confirm">{messages.settingsJoinsAllow}</option>
-                        <option value="auto">{messages.settingsJoinsAutoAccept}</option>
-                    </select>
-                </div>
-
-                <div className="settings-group">
-                    <fieldset className="settings-fieldset">
-                        <legend className="settings-fieldset__legend">
-                            <span className="settings-fieldset__legend-inner">
-                                <IconMusic className="settings-icon settings-icon--legend" />
-                                <span>{messages.settingsMusic || 'Background Music'}</span>
-                            </span>
-                        </legend>
-                        <div className="segmented-options segmented-options--2" role="radiogroup" aria-label={messages.settingsMusic || 'Background Music'}>
-                            {musicOptions.map((opt) => {
-                                const active = Boolean(musicEnabled) === opt.value;
-                                const OptionIcon = opt.Icon;
-                                return (
-                                    <label
-                                        key={String(opt.value)}
-                                        className={`segmented-label ${active ? ACTIVE_OPTION_CLASS : ''}`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="sudoku-music"
-                                            value={String(opt.value)}
-                                            checked={active}
-                                            onChange={() => onChangeMusicEnabled(opt.value)}
-                                        />
-                                        <OptionIcon className="settings-icon settings-icon--option" />
-                                        <span>{opt.label}</span>
-                                    </label>
-                                );
-                            })}
-                        </div>
-                        <div className={`settings-volume-row ${!musicEnabled ? 'settings-volume-row--disabled' : ''}`}>
-                            <label htmlFor="sudoku-music-volume" className="settings-volume-row__label">
-                                <IconVolume1 className="settings-icon settings-icon--volume" />
-                                <span>{messages.volumeLabel || 'Volume'}</span>
-                            </label>
-                            <input
-                                id="sudoku-music-volume"
-                                type="range"
-                                className="settings-volume-row__slider"
-                                min={0}
-                                max={100}
-                                step={5}
-                                value={musicPercent}
-                                disabled={!musicEnabled}
-                                aria-label={messages.musicVolumeLabel || 'Volume: Background Music'}
-                                onChange={(e) => onChangeMusicVolume(Number(e.target.value) / 100)}
-                            />
-                            <span className="settings-volume-row__value">{`${musicPercent}%`}</span>
-                        </div>
-                    </fieldset>
-                </div>
-
-                <div className="settings-group">
-                    <fieldset className="settings-fieldset">
-                        <legend className="settings-fieldset__legend">
-                            <span className="settings-fieldset__legend-inner">
-                                <IconAudioLines className="settings-icon settings-icon--legend" />
-                                <span>{messages.settingsSounds || 'Sound Effects'}</span>
-                            </span>
-                        </legend>
-                        <div className="segmented-options segmented-options--2" role="radiogroup" aria-label={messages.settingsSounds || 'Sound Effects'}>
-                            {soundOptions.map((opt) => {
-                                const active = Boolean(soundEnabled) === opt.value;
-                                const OptionIcon = opt.Icon;
-                                return (
-                                    <label
-                                        key={String(opt.value)}
-                                        className={`segmented-label ${active ? ACTIVE_OPTION_CLASS : ''}`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="sudoku-sounds"
-                                            value={String(opt.value)}
-                                            checked={active}
-                                            onChange={() => onChangeSoundEnabled(opt.value)}
-                                        />
-                                        <OptionIcon className="settings-icon settings-icon--option" />
-                                        <span>{opt.label}</span>
-                                    </label>
-                                );
-                            })}
-                        </div>
-                        <div className={`settings-volume-row ${!soundEnabled ? 'settings-volume-row--disabled' : ''}`}>
-                            <label htmlFor="sudoku-sound-volume" className="settings-volume-row__label">
-                                <IconVolume1 className="settings-icon settings-icon--volume" />
-                                <span>{messages.volumeLabel || 'Volume'}</span>
-                            </label>
-                            <input
-                                id="sudoku-sound-volume"
-                                type="range"
-                                className="settings-volume-row__slider"
-                                min={0}
-                                max={100}
-                                step={5}
-                                value={soundPercent}
-                                disabled={!soundEnabled}
-                                aria-label={messages.soundVolumeLabel || 'Volume: Sound Effects'}
-                                onChange={(e) => onChangeSoundVolume(Number(e.target.value) / 100)}
-                            />
-                            <span className="settings-volume-row__value">{`${soundPercent}%`}</span>
-                        </div>
-                    </fieldset>
-                </div>
-
-                <div className="settings-group settings-guide-row">
-                    <div className="settings-guide-row__copy">
-                        <h3 className="settings-guide-row__title">
-                            <IconBookOpen className="settings-icon settings-icon--title" />
-                            <span>{messages.settingsGuideTitle}</span>
-                        </h3>
-                        <p className="settings-guide-row__desc">{messages.settingsGuideDesc}</p>
+                <div className="f7-inset-list">
+                    <div className="f7-inset-list__item">
+                        <fieldset className="settings-fieldset">
+                            <legend className="settings-fieldset__legend">
+                                <span className="settings-fieldset__legend-inner">
+                                    <IconMusic className="settings-icon settings-icon--legend" />
+                                    <span>{messages.settingsMusic || 'Background Music'}</span>
+                                </span>
+                            </legend>
+                            <div className="segmented segmented-strong segmented-options segmented-options--2" role="radiogroup" aria-label={messages.settingsMusic || 'Background Music'}>
+                                {musicOptions.map((opt) => {
+                                    const active = Boolean(musicEnabled) === opt.value;
+                                    const OptionIcon = opt.Icon;
+                                    return (
+                                        <label
+                                            key={String(opt.value)}
+                                            className={`button segmented-label ${active ? ACTIVE_OPTION_CLASS : ''}`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="sudoku-music"
+                                                value={String(opt.value)}
+                                                checked={active}
+                                                onChange={() => onChangeMusicEnabled(opt.value)}
+                                            />
+                                            <OptionIcon className="settings-icon settings-icon--option" />
+                                            <span>{opt.label}</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            <div className={`settings-volume-row ${!musicEnabled ? 'settings-volume-row--disabled' : ''}`}>
+                                <label htmlFor="sudoku-music-volume" className="settings-volume-row__label">
+                                    <IconVolume1 className="settings-icon settings-icon--volume" />
+                                    <span>{messages.volumeLabel || 'Volume'}</span>
+                                </label>
+                                <input
+                                    id="sudoku-music-volume"
+                                    type="range"
+                                    className="settings-volume-row__slider"
+                                    min={0}
+                                    max={100}
+                                    step={5}
+                                    value={musicPercent}
+                                    disabled={!musicEnabled}
+                                    aria-label={messages.musicVolumeLabel || 'Volume: Background Music'}
+                                    onChange={(e) => onChangeMusicVolume(Number(e.target.value) / 100)}
+                                />
+                                <span className="settings-volume-row__value">{`${musicPercent}%`}</span>
+                            </div>
+                        </fieldset>
                     </div>
-                    <button
-                        type="button"
-                        id="settings-guide-btn"
-                        className="btn-secondary settings-guide-row__btn"
-                        onClick={onOpenGuide}
-                    >
-                        <IconHelpCircle className="settings-icon settings-icon--btn" />
-                        <span>{messages.openGuide}</span>
-                    </button>
+                    <div className="f7-inset-list__item">
+                        <fieldset className="settings-fieldset">
+                            <legend className="settings-fieldset__legend">
+                                <span className="settings-fieldset__legend-inner">
+                                    <IconAudioLines className="settings-icon settings-icon--legend" />
+                                    <span>{messages.settingsSounds || 'Sound Effects'}</span>
+                                </span>
+                            </legend>
+                            <div className="segmented segmented-strong segmented-options segmented-options--2" role="radiogroup" aria-label={messages.settingsSounds || 'Sound Effects'}>
+                                {soundOptions.map((opt) => {
+                                    const active = Boolean(soundEnabled) === opt.value;
+                                    const OptionIcon = opt.Icon;
+                                    return (
+                                        <label
+                                            key={String(opt.value)}
+                                            className={`button segmented-label ${active ? ACTIVE_OPTION_CLASS : ''}`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="sudoku-sounds"
+                                                value={String(opt.value)}
+                                                checked={active}
+                                                onChange={() => onChangeSoundEnabled(opt.value)}
+                                            />
+                                            <OptionIcon className="settings-icon settings-icon--option" />
+                                            <span>{opt.label}</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            <div className={`settings-volume-row ${!soundEnabled ? 'settings-volume-row--disabled' : ''}`}>
+                                <label htmlFor="sudoku-sound-volume" className="settings-volume-row__label">
+                                    <IconVolume1 className="settings-icon settings-icon--volume" />
+                                    <span>{messages.volumeLabel || 'Volume'}</span>
+                                </label>
+                                <input
+                                    id="sudoku-sound-volume"
+                                    type="range"
+                                    className="settings-volume-row__slider"
+                                    min={0}
+                                    max={100}
+                                    step={5}
+                                    value={soundPercent}
+                                    disabled={!soundEnabled}
+                                    aria-label={messages.soundVolumeLabel || 'Volume: Sound Effects'}
+                                    onChange={(e) => onChangeSoundVolume(Number(e.target.value) / 100)}
+                                />
+                                <span className="settings-volume-row__value">{`${soundPercent}%`}</span>
+                            </div>
+                        </fieldset>
+                    </div>
                 </div>
-                <label className="settings-language">
-                    <IconGlobe className="settings-icon settings-icon--legend" />
-                    <span>{messages.settingsLanguage}</span>
-                    <select className="settings-select" value={language} onChange={(event) => onChangeLanguage(event.target.value)}>
-                        {langOptions.map(({ value, label }) => (
-                            <option key={value} value={value}>{label}</option>
-                        ))}
-                    </select>
-                </label>
+
+                <div className="f7-inset-list">
+                    <div className="f7-inset-list__item settings-guide-row">
+                        <div className="settings-guide-row__copy">
+                            <h2 className="settings-guide-row__title">
+                                <IconBookOpen className="settings-icon settings-icon--title" />
+                                <span>{messages.settingsGuideTitle}</span>
+                            </h2>
+                            <p className="settings-guide-row__desc">{messages.settingsGuideDesc}</p>
+                        </div>
+                        <button
+                            type="button"
+                            id="settings-guide-btn"
+                            className="button button-tonal btn-secondary settings-guide-row__btn"
+                            onClick={onOpenGuide}
+                        >
+                            <IconHelpCircle className="settings-icon settings-icon--btn" />
+                            <span>{messages.openGuide}</span>
+                        </button>
+                    </div>
+                    <div className="f7-inset-list__item">
+                        <label className="settings-language">
+                            <span className="settings-language__label">
+                                <IconGlobe className="settings-icon settings-icon--legend" />
+                                <span>{messages.settingsLanguage}</span>
+                            </span>
+                            <select className="settings-select" value={language} onChange={(event) => onChangeLanguage(event.target.value)}>
+                                {langOptions.map(({ value, label }) => (
+                                    <option key={value} value={value}>{label}</option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+                </div>
             </div>
         </section>
     );

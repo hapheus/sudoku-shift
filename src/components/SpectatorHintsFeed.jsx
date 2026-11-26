@@ -8,16 +8,21 @@ export function SpectatorHintsFeed({ hintsByCell, variant = '3x3', canApply, onS
     }
 
     return (
-        <section id="spectator-hints-feed" className="hints-feed" aria-label="Spectator Hints">
+        <section id="spectator-hints-feed" className="hints-feed" aria-label={messages.spectatorHintsLabel || 'Spectator Hints'}>
             <span className="hints-feed__label">{messages.hintsFeedLabel}</span>
             {Array.from(hintsByCell.values()).map((hint) => {
                 const { row, col } = getCellCoords(hint.index, variant);
                 const cellLabel = formatCellCoord(hint.index, variant);
-                const digitPart = hint.topValue ? ` → ${hint.topValue}` : ' (check cell)';
+                const digitPart = hint.topValue ? ` → ${hint.topValue}` : (messages.spectatorCheckCellSuffix || ' (check cell)');
                 const countPart = hint.count > 1 ? ` ×${hint.count}` : '';
-                const title = canApply && hint.topValue
-                    ? `Apply hint ${hint.topValue} to ${cellLabel} (Row ${row + 1}, Column ${col + 1})`
-                    : `Highlight ${cellLabel} (Row ${row + 1}, Column ${col + 1})`;
+                const titleTemplate = canApply && hint.topValue
+                    ? (messages.spectatorApplyHintTooltip || 'Apply hint {value} to {cell} (Row {row}, Column {col})')
+                    : (messages.spectatorHighlightCellTooltip || 'Highlight {cell} (Row {row}, Column {col})');
+                const title = titleTemplate
+                    .replace('{value}', String(hint.topValue ?? ''))
+                    .replace('{cell}', cellLabel)
+                    .replace('{row}', String(row + 1))
+                    .replace('{col}', String(col + 1));
 
                 return (
                     <button

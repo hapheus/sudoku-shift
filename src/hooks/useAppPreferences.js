@@ -49,9 +49,10 @@ export function useAppPreferences() {
             let effective = theme;
             if (theme === 'system') effective = media?.matches === false ? 'light' : 'dark';
             document.documentElement.dataset.theme = effective;
+            document.documentElement.classList.toggle('dark', effective === 'dark');
             document.documentElement.style.colorScheme = effective;
             document.querySelector('meta[name="theme-color"]')?.setAttribute(
-                'content', effective === 'light' ? '#f6f2ea' : '#13161b',
+                'content', effective === 'light' ? '#f7f5f0' : '#11141a',
             );
         };
         applyTheme();

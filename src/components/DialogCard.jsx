@@ -18,10 +18,12 @@ export function DialogCard({ id, title, closeLabel, onClose, panel = false, retu
             }
             if (panel || event.key !== 'Tab') return;
 
-            const buttons = cardRef.current?.querySelectorAll('button:not(:disabled)');
-            if (!buttons?.length) return;
-            const first = buttons[0];
-            const last = buttons[buttons.length - 1];
+            const focusables = cardRef.current?.querySelectorAll(
+                'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+            );
+            if (!focusables?.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
             const boundary = event.shiftKey ? first : last;
             if (document.activeElement === boundary || !cardRef.current.contains(document.activeElement)) {
                 event.preventDefault();
@@ -44,13 +46,13 @@ export function DialogCard({ id, title, closeLabel, onClose, panel = false, retu
             aria-modal={panel ? undefined : true}
             aria-labelledby={titleId}
         >
-            <div className="dialog-card__header">
+            <div className="dialog-card__header f7-dialog-navbar">
                 <h2 id={titleId} className="dialog-card__title">{title}</h2>
-                <button ref={closeBtnRef} type="button" className="dialog-card__close" onClick={onClose}>
+                <button ref={closeBtnRef} type="button" className="button button-small button-tonal dialog-card__close" onClick={onClose}>
                     {closeLabel}
                 </button>
             </div>
-            {children}
+            <div className="dialog-card__body">{children}</div>
         </section>
     );
     if (panel) return content;

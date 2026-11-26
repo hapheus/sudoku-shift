@@ -1,3 +1,5 @@
+import './f7-init.js';
+import { App as F7App } from 'framework7-react';
 import { useLandscapeLayout } from './hooks/useLandscapeLayout.js';
 import { LandscapeArtwork, NightGhostArtwork } from './components/LandscapeArtwork.jsx';
 import { selectLandscapeArtwork } from './services/landscape-artwork.js';
@@ -43,6 +45,7 @@ import { HelpDialog } from './components/HelpDialog.jsx';
 import { BottomNav } from './components/BottomNav.jsx';
 import { SettingsPanel } from './components/SettingsPanel.jsx';
 import { SpectatorBackButton } from './components/SpectatorBackButton.jsx';
+import { IconArrowLeft } from './components/AppIcons.jsx';
 import { LegalPage } from './components/LegalPage.jsx';
 
 function getRestartState(messages, partnerOnline, rematchRequestedBy, myRole) {
@@ -115,6 +118,7 @@ export function App() {
         difficulty: getStorageItem('sudoku_difficulty', 'medium') || 'medium',
         variant: normalizeVariant(getStorageItem('sudoku_variant', '3x3') || '3x3'),
     }));
+    const [elapsedSeconds, setElapsedSeconds] = useState(() => gameState.elapsedSeconds || 0);
     const [boardBackground, setBoardBackground] = useState(() => selectBoardBackground());
     const [selectedIndex, setSelectedIndex] = useState(null);
     const [activeDigit, setActiveDigit] = useState(null);
@@ -129,6 +133,14 @@ export function App() {
     const [openPanel, setOpenPanel] = useState(null);
     const isHelpOpen = openPanel === 'guide';
     const isGameInfoOpen = openPanel === 'info';
+    useEffect(() => {
+        setElapsedSeconds(stateRef.current.gameState?.elapsedSeconds || 0);
+    }, [gameState, isGameInfoOpen]);
+    const handleTickElapsed = useCallback((nextElapsed) => {
+        if (stateRef.current.isGameInfoOpen || stateRef.current.gameState?.status === 'solved') {
+            setElapsedSeconds(nextElapsed);
+        }
+    }, []);
     const [pendingConfirm, setPendingConfirm] = useState(null);
     const [incomingJoinRequests, setIncomingJoinRequests] = useState([]);
     const incomingJoinRequest = incomingJoinRequests[0] || null;
@@ -200,6 +212,7 @@ export function App() {
         selectedIndex,
         activeDigit,
         isHelpOpen,
+        isGameInfoOpen,
         pendingConfirm,
         incomingJoinRequests,
         pendingJoinRequest,
@@ -426,6 +439,7 @@ export function App() {
         stateRef,
         onlineClientRef,
         setGameState,
+        onTickElapsed: handleTickElapsed,
         setPendingConfirm,
         setLegalPage,
         syncLobbyProgress,
@@ -500,6 +514,11 @@ export function App() {
         handleShift(axis, dir);
         handleKonamiInput(directionKey);
     }, [handleKonamiInput, handleShift, isRetroMode]);
+
+    const handleEraseDigit = useCallback(() => applyPlayerDigit(0), [applyPlayerDigit]);
+    const handleToggleNotesMode = useCallback(() => setNotesMode((prev) => !prev), []);
+    const handleShiftRowAction = useCallback((dir) => handleShiftWithKonami('row', dir), [handleShiftWithKonami]);
+    const handleShiftColAction = useCallback((dir) => handleShiftWithKonami('col', dir), [handleShiftWithKonami]);
 
     const handleExitRetro = useCallback(() => {
         setIsRetroMode(false);
@@ -678,6 +697,7 @@ export function App() {
         currentMembers: currentMembers,
         spectatedGameMode: spectatedGameMode,
         gameState: gameState,
+        elapsedSeconds: elapsedSeconds,
         ticTacToeGame: ticTacToe.challenge.game,
         onTicTacToeMove: ticTacToe.onMove,
         onReconnect: handleReconnect,
@@ -727,7 +747,7 @@ export function App() {
                 className="game-top-bar__back-btn"
                 onClick={gameViewProps.onBackToSetup}
             >
-                <span aria-hidden="true">←</span>
+                <IconArrowLeft className="back-btn__icon" />
                 <span>{messages.backToSetup}</span>
             </button>
         )
@@ -824,7 +844,7 @@ export function App() {
     const menuLayout = `app-container--with-nav landscape-screen${landscapeLayout ? ' split-panes' : ''}`;
 
     return (
-        <>
+        <F7App name="Sudoku Shift" theme="auto" darkMode={false} className="f7-shell">
             <div
                 id="sudoku-app"
                 className={`app-container ${showBottomNav ? menuLayout : 'app-container--gameplay'}`}
@@ -866,20 +886,70 @@ export function App() {
 
                 {showBottomNav && sessionNotices}
 
-                {!showLegalPage && navTab === 'play' && !isPlayingGame && (
-                    <SetupView
-                        variant={variant}
-                        difficulty={difficulty}
-                        canResumeGame={canResumeGame}
-                        isNativeApp={isNativeApp}
-                        onVariantChange={handleVariantChange}
-                        onDifficultyChange={handleDifficultyChange}
-                        onOpenSettings={() => handleSelectNavTab('settings')}
-                        onPlay={handlePlayFromSetup}
-                        onResume={handleResumeFromSetup}
-                        onOpenLegalPage={openLegalPage}
-                        messages={messages}
-                    />
+                {!showLegalPage && !showGame && (
+                    <main className="landscape-screen__main">
+                        {navTab === 'play' && !isPlayingGame && (
+                            <SetupView
+                                variant={variant}
+                                difficulty={difficulty}
+                                canResumeGame={canResumeGame}
+                                isNativeApp={isNativeApp}
+                                onVariantChange={handleVariantChange}
+                                onDifficultyChange={handleDifficultyChange}
+                                onPlay={handlePlayFromSetup}
+                                onResume={handleResumeFromSetup}
+                                onOpenLegalPage={openLegalPage}
+                                messages={messages}
+                            />
+                        )}
+
+                        {navTab === 'watch' && !isSpectating && (
+                            <WatchDirectory
+                                rooms={activeLobbyRooms}
+                                connectionStatus={connectionStatus}
+                                onReconnect={handleReconnect}
+                                onRefresh={openWatchDirectory}
+                                onWatchGame={spectateGame}
+                                onJoinGame={joinWatchGame}
+                                pendingJoinGameId={pendingJoinRequest?.gameId || null}
+                                onCancelJoinRequest={cancelPendingJoinRequest}
+                                messages={messages}
+                            />
+                        )}
+
+                        {navTab === 'settings' && (
+                            <>
+                                <SettingsPanel
+                                    hidden={settingsGuide}
+                                    theme={theme}
+                                    language={language}
+                                    playerName={playerName}
+                                    playerTag={formatPlayerTag(playerName, onlineClientRef.current?.clientId || getOrCreateClientId())}
+                                    joinsAllowed={joinsAllowed}
+                                    joinsAutoAccept={joinsAutoAccept}
+                                    musicEnabled={musicEnabled}
+                                    musicVolume={musicVolume}
+                                    soundEnabled={soundEnabled}
+                                    soundVolume={soundVolume}
+                                    onChangeTheme={setTheme}
+                                    onChangeLanguage={setLanguage}
+                                    onChangePlayerName={setPlayerName}
+                                    onRandomizePlayerName={randomizePlayerName}
+                                    onChangeJoinsAllowed={setJoinsAllowed}
+                                    onChangeJoinsAutoAccept={setJoinsAutoAccept}
+                                    onChangeMusicEnabled={handleMusicEnabledChange}
+                                    onChangeMusicVolume={handleMusicVolumeChange}
+                                    onChangeSoundEnabled={handleSoundEnabledChange}
+                                    onChangeSoundVolume={handleSoundVolumeChange}
+                                    onOpenGuide={openGuide}
+                                    messages={messages}
+                                />
+                                {settingsGuide && (
+                                    <HelpDialog isOpen panel onClose={closePanel} returnFocusRef={guideOpenerRef} messages={messages} />
+                                )}
+                            </>
+                        )}
+                    </main>
                 )}
 
                 {showGame && (
@@ -940,13 +1010,13 @@ export function App() {
                                 isRetroMode={isRetroMode}
                                 retroYear={retroYear}
                                 onUndo={handleUndo}
-                                onErase={() => applyPlayerDigit(0)}
-                                onToggleNotes={() => setNotesMode((prev) => !prev)}
+                                onErase={handleEraseDigit}
+                                onToggleNotes={handleToggleNotesMode}
                                 onFillCandidates={handleFillCandidates}
                                 onClearNotes={handleClearNotes}
                                 onLocalHint={handleLocalHint}
-                                onShiftRow={(dir) => handleShiftWithKonami('row', dir)}
-                                onShiftCol={(dir) => handleShiftWithKonami('col', dir)}
+                                onShiftRow={handleShiftRowAction}
+                                onShiftCol={handleShiftColAction}
                                 onKonamiButton={handleKonamiInput}
                                 onExitRetro={handleExitRetro}
                                 onDigit={applyPlayerDigit}
@@ -954,53 +1024,6 @@ export function App() {
                             />
                         )}
                     />
-                )}
-
-                {!showLegalPage && navTab === 'watch' && !isSpectating && (
-                    <WatchDirectory
-                        rooms={activeLobbyRooms}
-                        connectionStatus={connectionStatus}
-                        onReconnect={handleReconnect}
-                        onRefresh={openWatchDirectory}
-                        onWatchGame={spectateGame}
-                        onJoinGame={joinWatchGame}
-                        pendingJoinGameId={pendingJoinRequest?.gameId || null}
-                        onCancelJoinRequest={cancelPendingJoinRequest}
-                        messages={messages}
-                    />
-                )}
-
-                {!showLegalPage && navTab === 'settings' && (
-                    <>
-                        <SettingsPanel
-                            hidden={settingsGuide}
-                            theme={theme}
-                            language={language}
-                            playerName={playerName}
-                            playerTag={formatPlayerTag(playerName, onlineClientRef.current?.clientId || getOrCreateClientId())}
-                            joinsAllowed={joinsAllowed}
-                            joinsAutoAccept={joinsAutoAccept}
-                            musicEnabled={musicEnabled}
-                            musicVolume={musicVolume}
-                            soundEnabled={soundEnabled}
-                            soundVolume={soundVolume}
-                            onChangeTheme={setTheme}
-                            onChangeLanguage={setLanguage}
-                            onChangePlayerName={setPlayerName}
-                            onRandomizePlayerName={randomizePlayerName}
-                            onChangeJoinsAllowed={setJoinsAllowed}
-                            onChangeJoinsAutoAccept={setJoinsAutoAccept}
-                            onChangeMusicEnabled={handleMusicEnabledChange}
-                            onChangeMusicVolume={handleMusicVolumeChange}
-                            onChangeSoundEnabled={handleSoundEnabledChange}
-                            onChangeSoundVolume={handleSoundVolumeChange}
-                            onOpenGuide={openGuide}
-                            messages={messages}
-                        />
-                        {settingsGuide && (
-                            <HelpDialog isOpen panel onClose={closePanel} returnFocusRef={guideOpenerRef} messages={messages} />
-                        )}
-                    </>
                 )}
 
                 </div>
@@ -1015,6 +1038,6 @@ export function App() {
             </div>
 
             {!showBottomNav && landscapeLayout && <NightGhostArtwork nightGhost={nightGhost} />}
-        </>
+        </F7App>
     );
 }

@@ -42,7 +42,6 @@ describe('AlertBannerDialog and SetupView', () => {
                 isNativeApp={false}
                 onVariantChange={vi.fn()}
                 onDifficultyChange={vi.fn()}
-                onOpenSettings={vi.fn()}
                 onPlay={onPlay}
                 onResume={onResume}
                 onOpenLegalPage={vi.fn()}

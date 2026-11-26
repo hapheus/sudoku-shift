@@ -31,7 +31,7 @@ export function AlertBannerDialog({
                     ref={cancelRef}
                     type="button"
                     id={cancelId}
-                    className="confirm-banner__btn confirm-banner__btn--cancel"
+                    className="button button-outline confirm-banner__btn confirm-banner__btn--cancel"
                     onClick={onCancel}
                 >
                     {cancelLabel}
@@ -39,7 +39,7 @@ export function AlertBannerDialog({
                 <button
                     type="button"
                     id={confirmId}
-                    className={`confirm-banner__btn confirm-banner__btn--${confirmVariant}`}
+                    className={`button button-fill confirm-banner__btn confirm-banner__btn--${confirmVariant}`}
                     onClick={onConfirm}
                 >
                     {confirmLabel}

@@ -171,3 +171,48 @@ export function IconHelpCircle({ className = '' }) {
         </SvgIcon>
     );
 }
+
+export function IconArrowUp({ className = '' }) {
+    return (
+        <SvgIcon className={className}>
+            <path d="M12 19V5" />
+            <path d="m5 12 7-7 7 7" />
+        </SvgIcon>
+    );
+}
+
+export function IconArrowDown({ className = '' }) {
+    return (
+        <SvgIcon className={className}>
+            <path d="M12 5v14" />
+            <path d="m19 12-7 7-7-7" />
+        </SvgIcon>
+    );
+}
+
+export function IconArrowLeft({ className = '' }) {
+    return (
+        <SvgIcon className={className}>
+            <path d="M19 12H5" />
+            <path d="m12 19-7-7 7-7" />
+        </SvgIcon>
+    );
+}
+
+export function IconArrowRight({ className = '' }) {
+    return (
+        <SvgIcon className={className}>
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+        </SvgIcon>
+    );
+}
+
+export function IconSearch({ className = '' }) {
+    return (
+        <SvgIcon className={className}>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+        </SvgIcon>
+    );
+}
