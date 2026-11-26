@@ -26,6 +26,7 @@
         "ios:devices": "node scripts/ios-device.mjs --list",
         "ios:device": "node scripts/ios-device.mjs",
         "ios:screenshots": "node scripts/ios-screenshots.mjs",
+        "appstore:screenshots": "node scripts/app-store-screenshots.mjs",
         "browser:screenshots": "node scripts/browser-screenshots.mjs",
         "promo:clips": "node scripts/promo-clips.mjs",
         "ios:archive": "cd ios && fastlane archive",
