@@ -143,6 +143,8 @@
   "hintReasonNakedSingle": "Hinweis: {cell} = {digit} (einzige mögliche Zahl für dieses Feld).",
   "hintReasonFallback": "Hinweis: {cell} = {digit} (kein eindeutiger Einzelschritt verfügbar).",
   "appStoreLinkLabel": "App Store für iPhone und iPad",
+  "playStoreLinkLabel": "Android Play Store",
+  "comingSoonLabel": "Coming Soon",
   "webFooterLabel": "App-Download und rechtliche Hinweise",
   "legalLinksLabel": "Rechtliche Hinweise",
   "privacyTitle": "Datenschutz",

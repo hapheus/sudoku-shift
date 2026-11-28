@@ -143,6 +143,8 @@
   "hintReasonNakedSingle": "Hint: {cell} = {digit} (only possible candidate for this cell).",
   "hintReasonFallback": "Hint: {cell} = {digit} (no single-step deduction available).",
   "appStoreLinkLabel": "App Store for iPhone and iPad",
+  "playStoreLinkLabel": "Android Play Store",
+  "comingSoonLabel": "Coming Soon",
   "webFooterLabel": "App download and legal notices",
   "legalLinksLabel": "Legal notices",
   "privacyTitle": "Privacy Policy",
