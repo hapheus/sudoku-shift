@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'framework7-react';
-import { APP_STORE_URL, PLAY_STORE_URL } from '../utils/app-routing.js';
+import { APP_STORE_URL, getPlayStoreUrl } from '../utils/app-routing.js';
 import { DifficultySelector } from './DifficultySelector.jsx';
 import { VariantSelector } from './VariantSelector.jsx';
 
@@ -20,6 +20,7 @@ export function SetupView({
     onOpenLegalPage,
     messages,
 }) {
+    const playStoreUrl = getPlayStoreUrl();
     return (
         <section id="play-setup" className="play-setup split-layout" aria-label={messages.setupTitle}>
             <div className="split-region split-region--primary">
@@ -94,11 +95,11 @@ export function SetupView({
                                 </svg>
                                 <span>{messages.appStoreLinkLabel}</span>
                             </a>
-                            {PLAY_STORE_URL ? (
+                            {playStoreUrl ? (
                                 <a
                                     id="play-store-link"
                                     className="app-store-link button button-outline button-round"
-                                    href={PLAY_STORE_URL}
+                                    href={playStoreUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >

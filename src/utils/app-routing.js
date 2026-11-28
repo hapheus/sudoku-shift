@@ -1,8 +1,11 @@
 import { isValidGameId } from '../services/ws-config.js';
 
 export const APP_STORE_URL = 'https://apps.apple.com/app/sudoku-shift/id6834748729';
-// Set to 'https://play.google.com/store/apps/details?id=dev.fraha.sudoku' once published
-export const PLAY_STORE_URL = null;
+
+export function getPlayStoreUrl() {
+    const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
+    return env.VITE_PLAY_STORE_URL || '';
+}
 
 export function isNativeCapacitorApp() {
     return typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
