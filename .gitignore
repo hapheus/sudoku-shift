@@ -4,6 +4,11 @@
 .env.local
 .env.production
 ios/fastlane/.env
+android/fastlane/.env
+android/keystore.properties
+*.jks
+*.keystore
+*play-store-key*.json
 *.p8
 *.mobileprovision
 /.codex
@@ -32,6 +37,7 @@ Thumbs.db
 /artifacts/browser-screenshots/
 /artifacts/promo-clips/
 /artifacts/app-store/
+/artifacts/play-store/
 /coverage/
 
 /tools/local-bot/node_modules/
