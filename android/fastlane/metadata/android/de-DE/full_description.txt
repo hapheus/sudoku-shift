@@ -1,0 +1,7 @@
+Sudoku Shift verbindet klassisches 9×9-Sudoku mit einer ruhigen, klaren Touch-Oberfläche, wechselnden Spielfeld-Themen und optionaler Hintergrundmusik.
+
+• Klassisches Sudoku in mehreren Schwierigkeitsstufen – vom schnellen Rätsel zwischendurch bis zur kniffligen Herausforderung
+• Flüssige Steuerung mit Notizen (Bleistift-Modus), Rückgängig-Funktion und klarer Hervorhebung
+• Stimmungsvolle Hintergründe im Hell- und Dunkelmodus sowie entspannende Piano-Soundtracks
+• Gemeinsam spielen im Multiplayer-Modus oder entspannt allein offline knobeln
+• Keine Werbung, kein unnötiger Ballast – voller Fokus aufs Rätsel

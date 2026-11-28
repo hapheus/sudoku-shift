@@ -1,0 +1,7 @@
+Sudoku Shift pairs classic 9×9 Sudoku with a calm, focused touch interface, changing board themes, and optional background music.
+
+• Classic Sudoku across multiple difficulty levels – from quick warm-ups to challenging puzzles
+• Smooth controls with pencil notes, undo support, and clear cell highlighting
+• Atmospheric light and dark board themes with relaxing piano soundtracks
+• Play together in multiplayer mode or unwind solo offline
+• No ads, no clutter – just pure puzzle focus

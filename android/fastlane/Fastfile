@@ -1,0 +1,209 @@
+opt_out_usage
+default_platform(:android)
+
+REPO_ROOT = File.expand_path("../..", __dir__)
+ANDROID_ROOT = File.expand_path("..", __dir__)
+APP_GRADLE_PATH = File.join(ANDROID_ROOT, "app", "build.gradle")
+KEYSTORE_PROPS_PATH = File.join(ANDROID_ROOT, "keystore.properties")
+APP_IDENTIFIER = ENV.fetch("APP_IDENTIFIER", "dev.fraha.sudoku")
+AAB_PATH = File.join(ANDROID_ROOT, "app", "build", "outputs", "bundle", "release", "app-release.aab")
+
+def resolve_android_home
+  candidates = [
+    ENV["ANDROID_HOME"],
+    ENV["ANDROID_SDK_ROOT"],
+    File.join(Dir.home, "Library", "Android", "sdk"),
+    File.join(Dir.home, "Android", "Sdk")
+  ].compact
+  candidates.find { |dir| Dir.exist?(dir) }
+end
+
+def configure_android_env!
+  android_home = resolve_android_home
+  return unless android_home
+
+  ENV["ANDROID_HOME"] = android_home
+  ENV["ANDROID_SDK_ROOT"] = android_home
+  platform_tools = File.join(android_home, "platform-tools")
+  if Dir.exist?(platform_tools) && !ENV["PATH"].to_s.include?(platform_tools)
+    ENV["PATH"] = "#{platform_tools}#{File::PATH_SEPARATOR}#{ENV['PATH']}"
+  end
+end
+
+def resolve_play_json_key
+  raw = ENV["PLAY_STORE_JSON_KEY_PATH"].to_s.strip
+  return nil if raw.empty?
+
+  expanded = File.expand_path(raw, __dir__)
+  File.exist?(expanded) ? expanded : nil
+end
+
+def release_signing_configured?
+  return true if File.exist?(KEYSTORE_PROPS_PATH)
+
+  %w[
+    ANDROID_KEYSTORE_PATH
+    ANDROID_KEYSTORE_PASSWORD
+    ANDROID_KEY_ALIAS
+    ANDROID_KEY_PASSWORD
+  ].all? { |k| !ENV[k].to_s.strip.empty? }
+end
+
+def read_version_code
+  content = File.read(APP_GRADLE_PATH)
+  match = content.match(/^\s*versionCode\s+(\d+)/)
+  UI.user_error!("Could not find versionCode in #{APP_GRADLE_PATH}") unless match
+  match[1].to_i
+end
+
+def read_version_name
+  content = File.read(APP_GRADLE_PATH)
+  match = content.match(/^\s*versionName\s+"([^"]+)"/)
+  match ? match[1] : "unknown"
+end
+
+def write_version_code!(next_code)
+  content = File.read(APP_GRADLE_PATH)
+  updated = content.sub(/^(\s*versionCode\s+)\d+/, "\\1#{next_code}")
+  File.write(APP_GRADLE_PATH, updated)
+  UI.message("Updated versionCode to #{next_code}")
+  next_code
+end
+
+def bump_version_code!(track:, json_key:)
+  local_current = read_version_code
+  remote_latest = 0
+
+  if json_key
+    begin
+      codes = google_play_track_version_codes(
+        package_name: APP_IDENTIFIER,
+        track: track,
+        json_key: json_key
+      )
+      remote_latest = codes.map(&:to_i).max.to_i
+    rescue => ex
+      UI.important("Could not fetch remote Play Store versionCode (#{ex.message}); using local increment.")
+    end
+  end
+
+  next_code = [local_current + 1, remote_latest + 1].max
+  write_version_code!(next_code)
+end
+
+platform :android do
+  desc "Verify Capacitor, Android SDK, signing, and Fastlane configuration"
+  lane :preflight do
+    require "json"
+
+    configure_android_env!
+
+    cap_config_path = File.join(REPO_ROOT, "capacitor.config.json")
+    UI.user_error!("Missing capacitor.config.json at #{cap_config_path}") unless File.exist?(cap_config_path)
+    cap_config = JSON.parse(File.read(cap_config_path))
+
+    UI.user_error!("Missing Android app/build.gradle at #{APP_GRADLE_PATH}") unless File.exist?(APP_GRADLE_PATH)
+
+    sh("node", "--version")
+    sh("java", "-version")
+    sh("npx", "--prefix", REPO_ROOT, "cap", "ls")
+
+    json_key = resolve_play_json_key
+
+    UI.success("Android preflight passed:")
+    UI.message("  App ID:           #{cap_config['appId']} (Fastlane: #{APP_IDENTIFIER})")
+    UI.message("  Web Dir:          #{cap_config['webDir']}")
+    UI.message("  ANDROID_HOME:     #{ENV['ANDROID_HOME'] || 'not found'}")
+    UI.message("  Version:          #{read_version_name} (versionCode #{read_version_code})")
+    UI.message("  Release Signing:  #{release_signing_configured? ? 'configured' : 'not set (create android/keystore.properties or env vars)'}")
+    UI.message("  Play Store Key:   #{json_key ? json_key : 'not set (set PLAY_STORE_JSON_KEY_PATH in android/fastlane/.env)'}")
+  end
+
+  desc "Build Vite web bundle and sync Capacitor Android assets"
+  lane :sync_web do
+    configure_android_env!
+    sh(
+      "env",
+      "VITE_WS_URL=#{ENV.fetch('VITE_WS_URL', 'wss://sudoku-ws.fraha.dev/connection/websocket')}",
+      "npm", "--prefix", REPO_ROOT, "run", "cap:sync:android"
+    )
+  end
+
+  desc "Build Debug APK for local device testing"
+  lane :build_debug do |options|
+    configure_android_env!
+    sync_web unless options[:skip_web]
+    gradle(project_dir: ANDROID_ROOT, task: "assembleDebug")
+  end
+
+  desc "Build signed Release AAB locally (without uploading)"
+  lane :bundle do |options|
+    configure_android_env!
+    UI.user_error!("Release signing is not configured. Create android/keystore.properties or set ANDROID_KEYSTORE_* env vars.") unless release_signing_configured?
+    sync_web unless options[:skip_web]
+    gradle(project_dir: ANDROID_ROOT, task: "bundleRelease")
+    UI.success("Release bundle ready: #{AAB_PATH}")
+  end
+
+  desc "Build, bump versionCode, and upload to Google Play Internal Testing"
+  lane :internal do |options|
+    configure_android_env!
+    json_key = resolve_play_json_key
+    UI.user_error!("Missing Play Store JSON key. Set PLAY_STORE_JSON_KEY_PATH in android/fastlane/.env.") unless json_key
+    UI.user_error!("Release signing is not configured. Create android/keystore.properties or set ANDROID_KEYSTORE_* env vars.") unless release_signing_configured?
+
+    sync_web unless options[:skip_web]
+    bump_version_code!(track: "internal", json_key: json_key) unless options[:skip_bump]
+    gradle(project_dir: ANDROID_ROOT, task: "bundleRelease")
+
+    upload_to_play_store(
+      package_name: APP_IDENTIFIER,
+      track: "internal",
+      aab: AAB_PATH,
+      json_key: json_key,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Build, bump versionCode, and upload to Google Play Beta (Closed/Open Testing)"
+  lane :beta do |options|
+    configure_android_env!
+    json_key = resolve_play_json_key
+    UI.user_error!("Missing Play Store JSON key. Set PLAY_STORE_JSON_KEY_PATH in android/fastlane/.env.") unless json_key
+    UI.user_error!("Release signing is not configured. Create android/keystore.properties or set ANDROID_KEYSTORE_* env vars.") unless release_signing_configured?
+
+    track = options[:track] || "beta"
+    sync_web unless options[:skip_web]
+    bump_version_code!(track: track, json_key: json_key) unless options[:skip_bump]
+    gradle(project_dir: ANDROID_ROOT, task: "bundleRelease")
+
+    upload_to_play_store(
+      package_name: APP_IDENTIFIER,
+      track: track,
+      aab: AAB_PATH,
+      json_key: json_key,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Upload Play Store listing texts, icon, feature graphic, and screenshots"
+  lane :metadata do
+    configure_android_env!
+    json_key = resolve_play_json_key
+    UI.user_error!("Missing Play Store JSON key. Set PLAY_STORE_JSON_KEY_PATH in android/fastlane/.env.") unless json_key
+
+    upload_to_play_store(
+      package_name: APP_IDENTIFIER,
+      json_key: json_key,
+      track: "internal",
+      metadata_path: File.expand_path("metadata/android", __dir__),
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true
+    )
+  end
+end
