@@ -1143,6 +1143,8 @@ it('shows App Store download link, Privacy Policy, and Impressum on Web start sc
         fireEvent.click(document.getElementById('legal-back-btn'));
         expect(window.location.pathname).toBe('/');
         expect(document.getElementById('play-setup')).toBeVisible();
+        expect(document.getElementById('play-store-link')).toHaveTextContent(/Android Play Store/i);
+        expect(document.getElementById('play-store-link')).toHaveTextContent(/Coming Soon/i);
     } finally {
         window.history.replaceState({}, '', '/');
     }
@@ -1157,6 +1159,7 @@ it('hides Impressum, Privacy footer, and App Store link inside native Capacitor 
         expect(document.getElementById('play-setup')).toBeVisible();
         expect(document.getElementById('web-start-footer')).not.toBeInTheDocument();
         expect(document.getElementById('app-store-link')).not.toBeInTheDocument();
+        expect(document.getElementById('play-store-link')).not.toBeInTheDocument();
         expect(document.getElementById('privacy-link')).not.toBeInTheDocument();
         expect(document.getElementById('impressum-link')).not.toBeInTheDocument();
         expect(document.getElementById('legal-impressum')).not.toBeInTheDocument();
